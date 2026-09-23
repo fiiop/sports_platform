@@ -1,0 +1,40 @@
+from datetime import date, datetime
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    plans = relationship("Plan", back_populates="user", cascade="all, delete-orphan")
+    records = relationship("ExerciseRecord", back_populates="user", cascade="all, delete-orphan")
+
+class Plan(Base):
+    __tablename__ = "plans"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(100))
+    target: Mapped[str] = mapped_column(Text, default="")
+    weekly_minutes: Mapped[int] = mapped_column(Integer, default=150)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    user = relationship("User", back_populates="plans")
+
+class ExerciseRecord(Base):
+    __tablename__ = "exercise_records"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    exercise_date: Mapped[date] = mapped_column(Date, index=True)
+    exercise_type: Mapped[str] = mapped_column(String(50))
+    duration: Mapped[int] = mapped_column(Integer)
+    distance: Mapped[float] = mapped_column(Float, default=0.0)
+    intensity: Mapped[int] = mapped_column(Integer, default=3)
+    calories: Mapped[int] = mapped_column(Integer, default=0)
+    feeling: Mapped[str] = mapped_column(String(20), default="一般")
+    note: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    user = relationship("User", back_populates="records")
+    __table_args__ = (UniqueConstraint("user_id", "exercise_date", "exercise_type", name="uq_record_type_day"),)

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>大学生运动计划与训练记录平台</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header class="topbar"><div><h1>大学生运动计划与训练记录平台</h1><p>每日记录 → 指标统计 → 阶段复盘 → AI训练建议</p></div><div id="userArea"></div></header>
+<main class="container">
+  <section id="authPanel" class="card auth-grid">
+    <div><h2>登录 / 注册</h2><input id="username" placeholder="用户名"><input id="password" type="password" placeholder="至少6位密码"><div class="row"><button onclick="login()">登录</button><button class="ghost" onclick="registerUser()">注册</button></div><p id="authMsg" class="msg"></p></div>
+    <div class="tips"><strong>作业功能：</strong><br>① 创建个人运动计划<br>② 每日填写运动记录<br>③ 自动统计近30天指标<br>④ 生成7天阶段复盘<br>⑤ AI训练建议（可选API）</div>
+  </section>
+
+  <section id="appPanel" class="hidden">
+    <div class="grid-3">
+      <div class="metric card"><span>近30天运动时长</span><b id="mMinutes">0</b><small>分钟</small></div>
+      <div class="metric card"><span>运动天数</span><b id="mDays">0</b><small>天</small></div>
+      <div class="metric card"><span>消耗热量</span><b id="mCalories">0</b><small>千卡</small></div>
+    </div>
+
+    <div class="grid-2">
+      <section class="card"><h2>① 制定运动计划</h2><div class="form-grid">
+        <input id="planTitle" placeholder="例如：新学期体能提升计划">
+        <input id="planTarget" placeholder="目标，例如：提升心肺耐力">
+        <input id="weeklyMinutes" type="number" value="150" min="30" placeholder="每周目标分钟">
+        <input id="planStart" type="date"><input id="planEnd" type="date">
+      </div><button onclick="createPlan()">保存计划</button><p id="planMsg" class="msg"></p><div id="plans"></div></section>
+
+      <section class="card"><h2>② 每日运动记录</h2><div class="form-grid">
+        <input id="recordDate" type="date"><select id="exerciseType"><option>跑步</option><option>快走</option><option>骑行</option><option>篮球</option><option>羽毛球</option><option>力量训练</option><option>其他</option></select>
+        <input id="duration" type="number" min="1" placeholder="时长（分钟）"><input id="distance" type="number" min="0" step="0.1" placeholder="距离（公里）"><select id="intensity"><option value="1">1 轻松</option><option value="2">2 偏轻</option><option value="3" selected>3 中等</option><option value="4">4 偏高</option><option value="5">5 很高</option></select><input id="calories" type="number" min="0" placeholder="热量（千卡）"><select id="feeling"><option>很好</option><option selected>一般</option><option>疲劳</option></select><input id="note" placeholder="备注">
+      </div><button onclick="addRecord()">提交记录</button><p id="recordMsg" class="msg"></p></section>
+    </div>
+
+    <section class="card"><div class="section-head"><h2>③ 指标统计</h2><span>近14天运动时长</span></div><canvas id="chart" height="90"></canvas></section>
+
+    <div class="grid-2">
+      <section class="card"><h2>④ 阶段复盘</h2><div class="review-box"><b id="reviewStatus">-</b><div class="progress"><div id="progressBar"></div></div><p id="reviewText">-</p></div></section>
+      <section class="card"><h2>⑤ AI训练建议</h2><p class="muted">未配置AI API时，系统会自动使用规则建议，作业演示不受影响。</p><button onclick="getAIAdvice()">生成建议</button><pre id="aiAdvice" class="advice">点击“生成建议”</pre></section>
+    </div>
+
+    <section class="card"><div class="section-head"><h2>历史训练记录</h2><button class="ghost" onclick="logout()">退出登录</button></div><div class="table-wrap"><table><thead><tr><th>日期</th><th>项目</th><th>时长</th><th>距离</th><th>强度</th><th>感受</th><th>备注</th><th></th></tr></thead><tbody id="records"></tbody></table></div></section>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body></html>
