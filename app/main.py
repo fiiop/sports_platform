@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime, timedelta
+from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -7,18 +8,20 @@ import hashlib
 import hmac
 import os
 import secrets
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
-from .models import User, Plan, ExerciseRecord
+from .models import User, Plan, ExerciseRecord, LoginSession
 from .schemas import UserIn, PlanIn, RecordIn
 from .services.analytics import summary, chart_data, review
 from .services.ai_advice import generate_ai_advice
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="大学生运动计划与训练记录平台", version="1.0.0")
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+APP_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
+templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
     digest = hashlib.scrypt(password.encode(), salt=salt, n=2**14, r=8, p=1)
@@ -36,12 +39,15 @@ def verify_password(password: str, encoded: str) -> bool:
     except Exception:
         return False
 
-# 简单 Cookie 会话，适合作业演示；生产环境建议换成 JWT/Redis。
+# Only a hash of the random session token is stored in the database.
 def current_user(request: Request, db: Session):
-    uid = request.cookies.get("uid")
-    if not uid or not uid.isdigit():
+    token = request.cookies.get("session", "")
+    if len(token) != 64:
         return None
-    return db.get(User, int(uid))
+    session = db.get(LoginSession, hashlib.sha256(token.encode()).hexdigest())
+    if not session or session.expires_at <= datetime.utcnow():
+        return None
+    return db.get(User, session.user_id)
 
 def require_user(request: Request, db: Session):
     user = current_user(request, db)
@@ -52,7 +58,7 @@ def require_user(request: Request, db: Session):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, db: Session = Depends(get_db)):
     user = current_user(request, db)
-    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request=request, name="index.html", context={"user": user})
 
 @app.post("/api/register")
 def register(payload: UserIn, db: Session = Depends(get_db)):
@@ -60,19 +66,42 @@ def register(payload: UserIn, db: Session = Depends(get_db)):
     if exists:
         raise HTTPException(400, "用户名已存在")
     user = User(username=payload.username, password_hash=hash_password(payload.password))
-    db.add(user); db.commit(); db.refresh(user)
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "用户名已存在")
+    db.refresh(user)
     return {"message": "注册成功", "user_id": user.id}
 
 @app.post("/api/login")
-def login(payload: UserIn, response: Response, db: Session = Depends(get_db)):
+def login(payload: UserIn, request: Request, response: Response, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.username == payload.username))
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(401, "用户名或密码错误")
-    response.set_cookie("uid", str(user.id), httponly=True, samesite="lax", max_age=86400 * 7)
+    old_token = request.cookies.get("session", "")
+    db.execute(delete(LoginSession).where(
+        (LoginSession.expires_at <= datetime.utcnow()) |
+        (LoginSession.token_hash == hashlib.sha256(old_token.encode()).hexdigest())
+    ))
+    token = secrets.token_hex(32)
+    db.add(LoginSession(token_hash=hashlib.sha256(token.encode()).hexdigest(),
+                        user_id=user.id, expires_at=datetime.utcnow() + timedelta(days=7)))
+    db.commit()
+    response.set_cookie("session", token, httponly=True, samesite="lax",
+                        secure=os.getenv("COOKIE_SECURE", "false").lower() == "true",
+                        max_age=86400 * 7)
+    response.delete_cookie("uid")
     return {"message": "登录成功", "username": user.username}
 
 @app.post("/api/logout")
-def logout(response: Response):
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    token = request.cookies.get("session", "")
+    db.execute(delete(LoginSession).where(
+        LoginSession.token_hash == hashlib.sha256(token.encode()).hexdigest()))
+    db.commit()
+    response.delete_cookie("session")
     response.delete_cookie("uid")
     return {"message": "已退出"}
 
@@ -126,7 +155,13 @@ def create_record(payload: RecordIn, request: Request, db: Session = Depends(get
     if exists:
         raise HTTPException(400, "同一天同类型运动已有记录，可修改为不同项目后再提交")
     row = ExerciseRecord(user_id=user.id, **payload.model_dump())
-    db.add(row); db.commit(); db.refresh(row)
+    db.add(row)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "同一天同类型运动已有记录")
+    db.refresh(row)
     return record_to_dict(row)
 
 @app.delete("/api/records/{record_id}")

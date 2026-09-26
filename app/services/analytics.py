@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
-from ..models import ExerciseRecord
+from ..models import ExerciseRecord, Plan
 
 def summary(db: Session, user_id: int):
     today = date.today()
@@ -43,19 +43,22 @@ def chart_data(db: Session, user_id: int):
 
 def review(db: Session, user_id: int):
     s = summary(db, user_id)
-    target = 150
+    today = date.today()
+    plan = db.scalar(select(Plan).where(
+        Plan.user_id == user_id, Plan.start_date <= today, Plan.end_date >= today
+    ).order_by(Plan.start_date.desc(), Plan.id.desc()).limit(1))
+    target = plan.weekly_minutes if plan else 150
     completion = round(s["last7_minutes"] / target * 100)
-    completion = min(completion, 200)
     if s["last7_minutes"] == 0:
         status = "尚未开始"
-        advice = "本周还没有记录，先完成 20–30 分钟的轻到中等强度运动，建立连续记录习惯。"
-    elif s["last7_minutes"] < 90:
+        advice = "近7天还没有记录，先完成 20–30 分钟的轻到中等强度运动，建立连续记录习惯。"
+    elif s["last7_minutes"] < target * 0.6:
         status = "需要提高频率"
-        advice = "本周运动量偏少，可以从每周 3 次、每次 30 分钟开始，逐步增加。"
-    elif s["last7_minutes"] < 150:
+        advice = "近7天运动量偏少，可以从每周 3 次、每次 30 分钟开始，逐步增加。"
+    elif s["last7_minutes"] < target:
         status = "接近目标"
         advice = "已经形成一定习惯，可以保持当前频率，并逐步补齐每周活动量。"
     else:
         status = "目标达成"
-        advice = "本周运动量达到设定目标，继续保持，同时关注恢复、睡眠和训练强度。"
+        advice = "近7天运动量达到设定目标，继续保持，同时关注恢复、睡眠和训练强度。"
     return {"weekly_minutes": s["last7_minutes"], "target": target, "completion": completion, "status": status, "advice": advice}

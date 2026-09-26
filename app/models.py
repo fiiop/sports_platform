@@ -38,3 +38,10 @@ class ExerciseRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     user = relationship("User", back_populates="records")
     __table_args__ = (UniqueConstraint("user_id", "exercise_date", "exercise_type", name="uq_record_type_day"),)
+
+
+class LoginSession(Base):
+    __tablename__ = "login_sessions"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)

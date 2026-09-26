@@ -105,3 +105,24 @@ sports_platform/
 ├── requirements.txt
 └── README.md
 ```
+
+
+## 9. 本次完善与验证
+
+- 登录改为数据库保存的随机会话（仅保存令牌哈希），有效期 7 天；退出会立即撤销会话。旧的 uid Cookie 不再作为登录凭据，更新后需重新登录。
+- 阶段复盘使用今天有效的计划目标；多个有效计划取开始日期最新的一条，同日取最新创建的一条；没有有效计划时采用 150 分钟。统计窗口为近 7 天，完成率保留真实值，进度条最多显示 100%。
+- 修复计划标题、目标、运动项目、感受及备注的 HTML 注入问题；使用浏览器本地日期预填表单；图表 CDN 不可用时仍加载计划与记录。
+- 数据库自动新增 login_sessions 表，现有用户、计划及记录无需迁移或清空。
+- Docker 构建排除本地数据库、虚拟环境、Git 和 .env，避免把本地数据打包进镜像。
+- 云端 HTTPS 环境设置 COOKIE_SECURE=true；本地 HTTP 保持 false。Docker Compose 会传入该变量。多实例必须连接同一个 PostgreSQL 数据库。
+- postgres:// 和 postgresql:// 连接串自动适配已安装的 psycopg 驱动。
+
+运行回归测试（使用独立内存数据库，不修改 sports.db）：
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_regressions.py" -v
+node --check app/static/app.js
+node tests/frontend.cjs
+```
+
+云端 PostgreSQL 驱动配置参考：[SQLAlchemy 官方文档](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html)。接口测试采用 [FastAPI TestClient](https://fastapi.tiangolo.com/tutorial/testing/)。

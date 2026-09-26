@@ -7,7 +7,7 @@ async def generate_ai_advice(summary: dict, review: dict):
         return fallback(summary, review)
     base = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
     model = os.getenv("AI_MODEL", "gpt-4o-mini")
-    prompt = f"""你是大学生运动训练助手。请根据以下数据给出简短、可执行的建议，中文输出，包含：本周总结、下周计划、注意事项。\n数据：{summary}\n阶段复盘：{review}"""
+    prompt = f"""你是大学生运动训练助手。请根据以下数据给出简短、可执行的建议，中文输出，包含：近7天总结、下周计划、注意事项。\n数据：{summary}\n阶段复盘：{review}"""
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -26,7 +26,7 @@ def fallback(summary, review):
     else:
         intensity = "训练强度整体可控，可在身体状态良好时逐步增加一点时长。"
     return (
-        f"本周累计运动 {review['weekly_minutes']} 分钟，目标完成度约 {review['completion']}%。{review['advice']}\n"
+        f"近7天累计运动 {review['weekly_minutes']} 分钟，目标完成度约 {review['completion']}%。{review['advice']}\n"
         f"建议：安排 3–5 次运动，每次 30–60 分钟；记录运动后的主观感受，方便阶段复盘。\n"
         f"注意：出现持续疼痛、头晕、胸闷等异常情况时应停止训练并及时就医。{intensity}"
     )
