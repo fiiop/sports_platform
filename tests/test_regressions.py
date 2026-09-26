@@ -117,6 +117,78 @@ class RegressionTests(unittest.TestCase):
         payload.update(exercise_type="running", feeling="x" * 21)
         self.assertEqual(self.client.post("/api/records", json=payload).status_code, 422)
 
+    def test_edit_record_and_conflict_rollback(self):
+        self.login()
+        first = self.record(30).json()
+        second = self.record(40, 1).json()
+        first["duration"] = 90
+        self.assertEqual(self.client.put(f"/api/records/{first['id']}", json=first).status_code, 200)
+        second["exercise_date"] = first["exercise_date"]
+        self.assertEqual(self.client.put(f"/api/records/{second['id']}", json=second).status_code, 409)
+        self.assertEqual(self.client.get("/api/dashboard").json()["summary"]["total_minutes"], 130)
+
+    def test_edit_and_delete_plan_updates_target(self):
+        self.login()
+        plan_id = self.plan(60).json()["id"]
+        plan = self.client.get("/api/plans").json()[0]
+        plan["weekly_minutes"] = 300
+        self.assertEqual(self.client.put(f"/api/plans/{plan_id}", json=plan).status_code, 200)
+        self.assertEqual(self.client.get("/api/review").json()["target"], 300)
+        self.record()
+        self.assertEqual(self.client.delete(f"/api/plans/{plan_id}").status_code, 200)
+        self.assertEqual(self.client.get("/api/review").json()["target"], 150)
+        self.assertEqual(len(self.client.get("/api/records").json()), 1)
+
+    def test_weekly_comparison_and_reflection(self):
+        self.login()
+        self.record(60, 0)
+        self.record(30, 6)
+        self.record(40, 7)
+        self.record(10, 13)
+        self.record(100, 14)
+        review = self.client.get("/api/review").json()
+        self.assertEqual(review["weekly_minutes"], 90)
+        self.assertEqual(review["previous_minutes"], 50)
+        self.assertEqual(review["delta_minutes"], 40)
+        self.assertEqual(review["change_percent"], 80)
+        self.assertEqual(review["active_days"], 2)
+        for text in ("first", "updated"):
+            response = self.client.put("/api/reflection", json={"reflection": text, "next_action": "Walk"})
+            self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get("/api/reflection").json()["reflection"], "updated")
+        self.assertEqual(self.client.post("/api/ai-advice").json()["source"], "rules")
+
+    def test_edit_routes_and_reflections_are_isolated(self):
+        self.login()
+        row = self.record().json()
+        plan_id = self.plan().json()["id"]
+        plan = self.client.get("/api/plans").json()[0]
+        self.client.put("/api/reflection", json={"reflection": "private"})
+        other = {"username": "another", "password": "test-pass-456"}
+        self.client.post("/api/register", json=other)
+        self.client.post("/api/login", json=other)
+        self.assertEqual(self.client.put(f"/api/records/{row['id']}", json=row).status_code, 404)
+        self.assertEqual(self.client.put(f"/api/plans/{plan_id}", json=plan).status_code, 404)
+        self.assertEqual(self.client.delete(f"/api/plans/{plan_id}").status_code, 404)
+        self.assertEqual(self.client.get("/api/reflection").json()["reflection"], "")
+
+    def test_pagination_and_install_assets(self):
+        self.login()
+        for days in range(3):
+            self.record(days=days)
+        first = self.client.get("/api/records?limit=2").json()
+        second = self.client.get("/api/records?offset=2&limit=2").json()
+        self.assertEqual(len(first), 2)
+        self.assertEqual(len(second), 1)
+        self.assertNotIn(second[0]["id"], [r["id"] for r in first])
+        self.assertEqual(self.client.get("/api/records?offset=-1").status_code, 422)
+        manifest = self.client.get("/static/manifest.webmanifest").json()
+        self.assertEqual(manifest["display"], "standalone")
+        for icon in manifest["icons"]:
+            self.assertTrue(self.client.get(icon["src"]).content.startswith(b"\x89PNG"))
+        self.assertEqual(self.client.get("/sw.js").headers["service-worker-allowed"], "/")
+        self.assertEqual(self.client.get("/static/offline.html").status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

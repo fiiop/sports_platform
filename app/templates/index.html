@@ -1,50 +1,35 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>大学生运动计划与训练记录平台</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#185c45"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="循动：为大学生设计的运动计划、训练记录与每周复盘。">
+<title>循动 · 让运动成为日常</title>
+<link rel="manifest" href="/static/manifest.webmanifest"><link rel="icon" href="/static/icon-192.png"><link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
 </head>
 <body>
-<header class="topbar"><div><h1>大学生运动计划与训练记录平台</h1><p>每日记录 → 指标统计 → 阶段复盘 → AI训练建议</p></div><div id="userArea"></div></header>
-<main class="container">
-  <section id="authPanel" class="card auth-grid">
-    <div><h2>登录 / 注册</h2><input id="username" placeholder="用户名"><input id="password" type="password" placeholder="至少6位密码"><div class="row"><button onclick="login()">登录</button><button class="ghost" onclick="registerUser()">注册</button></div><p id="authMsg" class="msg"></p></div>
-    <div class="tips"><strong>作业功能：</strong><br>① 创建个人运动计划<br>② 每日填写运动记录<br>③ 自动统计近30天指标<br>④ 生成7天阶段复盘<br>⑤ AI训练建议（可选API）</div>
-  </section>
-
-  <section id="appPanel" class="hidden">
-    <div class="grid-3">
-      <div class="metric card"><span>近30天运动时长</span><b id="mMinutes">0</b><small>分钟</small></div>
-      <div class="metric card"><span>运动天数</span><b id="mDays">0</b><small>天</small></div>
-      <div class="metric card"><span>消耗热量</span><b id="mCalories">0</b><small>千卡</small></div>
-    </div>
-
-    <div class="grid-2">
-      <section class="card"><h2>① 制定运动计划</h2><div class="form-grid">
-        <input id="planTitle" placeholder="例如：新学期体能提升计划">
-        <input id="planTarget" placeholder="目标，例如：提升心肺耐力">
-        <input id="weeklyMinutes" type="number" value="150" min="30" placeholder="每周目标分钟">
-        <input id="planStart" type="date"><input id="planEnd" type="date">
-      </div><button onclick="createPlan()">保存计划</button><p id="planMsg" class="msg"></p><div id="plans"></div></section>
-
-      <section class="card"><h2>② 每日运动记录</h2><div class="form-grid">
-        <input id="recordDate" type="date"><select id="exerciseType"><option>跑步</option><option>快走</option><option>骑行</option><option>篮球</option><option>羽毛球</option><option>力量训练</option><option>其他</option></select>
-        <input id="duration" type="number" min="1" placeholder="时长（分钟）"><input id="distance" type="number" min="0" step="0.1" placeholder="距离（公里）"><select id="intensity"><option value="1">1 轻松</option><option value="2">2 偏轻</option><option value="3" selected>3 中等</option><option value="4">4 偏高</option><option value="5">5 很高</option></select><input id="calories" type="number" min="0" placeholder="热量（千卡）"><select id="feeling"><option>很好</option><option selected>一般</option><option>疲劳</option></select><input id="note" placeholder="备注">
-      </div><button onclick="addRecord()">提交记录</button><p id="recordMsg" class="msg"></p></section>
-    </div>
-
-    <section class="card"><div class="section-head"><h2>③ 指标统计</h2><span>近14天运动时长</span></div><canvas id="chart" height="90"></canvas></section>
-
-    <div class="grid-2">
-      <section class="card"><h2>④ 阶段复盘</h2><div class="review-box"><b id="reviewStatus">-</b><div class="progress"><div id="progressBar"></div></div><p id="reviewText">-</p></div></section>
-      <section class="card"><h2>⑤ AI训练建议</h2><p class="muted">未配置AI API时，系统会自动使用规则建议，作业演示不受影响。</p><button onclick="getAIAdvice()">生成建议</button><pre id="aiAdvice" class="advice">点击“生成建议”</pre></section>
-    </div>
-
-    <section class="card"><div class="section-head"><h2>历史训练记录</h2><button class="ghost" onclick="logout()">退出登录</button></div><div class="table-wrap"><table><thead><tr><th>日期</th><th>项目</th><th>时长</th><th>距离</th><th>强度</th><th>感受</th><th>备注</th><th></th></tr></thead><tbody id="records"></tbody></table></div></section>
-  </section>
+<div id="networkBanner" class="network hidden" role="status">当前离线。已填写的训练记录可暂存草稿，联网后请手动提交。</div>
+<header class="topbar"><a class="brand" href="/" aria-label="循动首页"><span class="brand-icon">↗</span><span>循动<small>CAMPUS MOVE</small></span></a><div class="top-actions"><span class="pill">一点一滴，持续向前</span><button class="ghost" id="installButton" type="button">安装到手机</button></div></header>
+<main>
+<section id="authPanel" class="auth-wrap">
+<div class="auth-story"><span class="eyebrow">YOUR PACE. YOUR PROGRESS.</span><h1>动起来，<br>把进步留住。</h1><p>不必一开始就很厉害。<br>从今天的一次运动，到下周更好的自己。</p><div class="story-track"><span>01  制定计划</span><span>02  记录每一次</span><span>03  看见进步</span></div><div class="orbit" aria-hidden="true"><span>MOVE<br>WITH<br>INTENTION.</span></div></div>
+<div class="card auth-card"><span class="eyebrow">WELCOME TO CAMPUS MOVE</span><h2>开始你的运动日常</h2><p class="muted">登录后，你的计划与记录会保存在账号中。</p><form id="authForm"><label>用户名<input id="username" name="username" autocomplete="username" minlength="2" maxlength="50" required placeholder="输入用户名"></label><label>密码<input id="password" name="password" type="password" autocomplete="current-password" minlength="6" maxlength="100" required placeholder="至少 6 位密码"></label><div class="actions"><button type="submit">登录 →</button><button type="button" class="ghost" id="registerButton">注册账号</button></div><p id="authMsg" class="msg" role="status"></p></form><p class="fine">专注你的运动习惯。无需手环，也无需公开个人数据。</p></div>
+</section>
+<div id="appPanel" class="workspace hidden">
+<aside class="sidebar"><nav id="navigation" aria-label="主导航"><button type="button" class="nav-item active" data-page="home" aria-current="page"><span>◫</span>首页</button><button type="button" class="nav-item" data-page="records"><span>＋</span>记录</button><button type="button" class="nav-item" data-page="plans"><span>▤</span>计划</button><button type="button" class="nav-item" data-page="profile"><span>◎</span>我的</button></nav><div class="sidebar-note">每一次出发<br>都算数。<span>KEEP SHOWING UP.</span></div></aside>
+<div class="content">
+<section class="page" id="page-home"><div class="page-heading"><div><span class="eyebrow" id="todayLabel"></span><h1>你好，<span id="greetingName">运动伙伴</span> <span class="sun">✳</span></h1><p class="muted">不和别人比较，记录自己的每一步。</p></div><button type="button" data-go="records">＋ 记录一次运动</button></div>
+<div class="hero"><div><span class="eyebrow">YOUR WEEK IN MOTION</span><h2 id="reviewStatus">从一次运动开始</h2><p id="reviewText">正在读取你的训练进度…</p><div class="progress"><div id="progressBar"></div></div><span id="completionLabel">近 7 天目标完成度</span></div><div class="hero-mark" aria-hidden="true">↗</div></div>
+<div class="metrics"><article class="card metric"><span>近 30 天 · 运动时长</span><div><b id="mMinutes">0</b><small>分钟</small></div><span class="metric-foot">让每一分钟都有迹可循</span></article><article class="card metric"><span>近 30 天 · 活跃天数</span><div><b id="mDays">0</b><small>天</small></div><span class="metric-foot">坚持，也可以慢慢来</span></article><article class="card metric"><span>近 30 天 · 记录热量</span><div><b id="mCalories">0</b><small>千卡</small></div><span class="metric-foot">来自你填写的训练数据</span></article></div>
+<section class="card chart-card"><div class="section-head"><div><span class="eyebrow">ACTIVITY TREND</span><h2>运动的节奏</h2></div><span class="pill">最近 14 天 · 分钟</span></div><div id="chart" class="bar-chart" role="img" aria-label="近14天运动时长趋势"></div><p id="chartCaption" class="fine"></p></section>
+<div class="two-col"><section class="card"><span class="eyebrow">REFLECT & RESET</span><h2>每周，和自己聊一聊</h2><p id="comparison" class="comparison"></p><p class="fine" id="reviewPeriod"></p><form id="reflectionForm"><label>这周做得怎么样？<textarea id="reflection" maxlength="2000" rows="3" placeholder="哪一次运动让你最有成就感？什么影响了坚持？"></textarea></label><label>下周的一件小事<textarea id="nextAction" maxlength="1000" rows="2" placeholder="例如：周二和周四晚饭后快走 20 分钟"></textarea></label><div class="actions"><button type="submit">保存复盘</button><button class="ghost" type="button" id="adjustPlan">调整计划 ↗</button></div><p id="reflectionMsg" class="msg" role="status"></p></form></section><section class="card advice-card"><span class="eyebrow">A LITTLE GUIDANCE</span><h2>下一步，怎么动？</h2><span class="pill" id="adviceSource">训练建议</span><p class="muted">结合你的运动记录与目标，整理下一步建议。</p><button type="button" id="adviceButton" class="ghost">生成训练建议 ↗</button><pre id="aiAdvice" class="advice">记录几次运动，再来看看建议吧。</pre><p class="fine">建议仅作一般运动参考，请结合自身情况调整。</p></section></div>
+</section>
+<section class="page hidden" id="page-records"><div class="page-heading"><div><span class="eyebrow">MAKE EVERY MOVE COUNT</span><h1>记录每一次</h1><p class="muted">认真动过的每一分钟，都值得被记住。</p></div></div><section class="card"><div class="section-head"><h2 id="recordFormTitle">今天，你怎么动的？</h2><span class="pill">训练日记</span></div><form id="recordForm"><div class="form-grid"><label>运动日期<input id="recordDate" type="date" required></label><label>运动项目<input id="exerciseType" list="exerciseOptions" maxlength="50" required value="跑步"><datalist id="exerciseOptions"><option value="跑步"><option value="快走"><option value="骑行"><option value="篮球"><option value="羽毛球"><option value="力量训练"><option value="瑜伽"></datalist></label><label>时长 / 分钟<input id="duration" type="number" min="1" max="600" required inputmode="numeric" placeholder="例如 30"></label><label>距离 / 公里<input id="distance" type="number" min="0" max="500" step="0.01" inputmode="decimal" placeholder="选填"></label><label>训练强度<select id="intensity"><option value="1">1 · 很轻松</option><option value="2">2 · 轻松</option><option value="3" selected>3 · 中等</option><option value="4">4 · 吃力</option><option value="5">5 · 非常吃力</option></select></label><label>热量 / 千卡<input id="calories" type="number" min="0" max="10000" inputmode="numeric" placeholder="选填"></label><label>运动后感受<select id="feeling"><option>很好</option><option selected>一般</option><option>疲惫</option></select></label><label>给今天的一句话<input id="note" maxlength="2000" placeholder="例如：和室友跑完了三公里"></label></div><div class="actions"><button id="recordSubmit" type="submit">保存记录</button><button id="cancelRecord" class="ghost hidden" type="button">取消编辑</button><button id="saveDraft" class="text-button" type="button">暂存草稿</button><button id="restoreDraft" class="text-button" type="button">恢复草稿</button></div><p id="recordMsg" class="msg" role="status"></p></form><p class="fine">同一天同一项目合并为一条记录，可随时编辑。草稿只保存在当前浏览器，退出账号时清除。</p></section><section class="card"><div class="section-head"><h2>你的训练足迹</h2><button type="button" id="reloadRecords" class="text-button">刷新</button></div><div id="records" class="record-list"></div><button type="button" id="loadMore" class="ghost hidden">加载更多</button></section></section>
+<section class="page hidden" id="page-plans"><div class="page-heading"><div><span class="eyebrow">SMALL STEPS. REAL CHANGE.</span><h1>按自己的节奏来</h1><p class="muted">设一个能坚持的目标，给生活留一点余地。</p></div></div><section class="card"><h2 id="planFormTitle">制定运动计划</h2><form id="planForm"><div class="form-grid"><label>计划名称<input id="planTitle" maxlength="100" required placeholder="例如：我的四周运动习惯"></label><label>我想达到的目标<input id="planTarget" maxlength="2000" placeholder="例如：每周安排三次课后运动"></label><label>每周目标 / 分钟<input id="weeklyMinutes" type="number" value="150" min="30" max="1000" required></label><label>开始日期<input id="planStart" type="date" required></label><label>结束日期<input id="planEnd" type="date" required></label></div><div class="actions"><button id="planSubmit" type="submit">保存计划</button><button id="cancelPlan" class="ghost hidden" type="button">取消编辑</button></div><p id="planMsg" class="msg" role="status"></p></form></section><section class="card"><h2>我的计划</h2><p class="fine">首页采用当前有效且开始日期最新的计划；同日开始时采用最新创建的一条。</p><div id="plans"></div></section></section>
+<section class="page hidden" id="page-profile"><div class="page-heading"><div><span class="eyebrow">YOUR OWN JOURNEY</span><h1>我的运动空间</h1></div></div><section class="card profile-card"><span class="avatar">↗</span><div><h2 id="userArea"></h2><p class="muted">慢一点也没关系，继续就很好。</p></div></section><section class="card"><h2>把循动放进口袋</h2><p class="muted">安装到手机桌面，下次记录少一步。</p><button type="button" id="profileInstall">查看安装方式</button><p class="fine">安装后仍需联网登录和保存记录；断网时可暂存正在填写的草稿。</p></section><section class="card"><h2>你的数据，由你掌握</h2><p class="muted">记录只对当前账号开放。请勿在备注中填写不必要的敏感信息。</p><button type="button" class="ghost" id="exportButton">导出全部训练记录（JSON）</button><p class="fine">导出包含所有训练记录；不包含账号密码、计划和复盘笔记。</p></section><section class="card"><h2>关于循动</h2><p class="muted">为大学生设计的运动计划与训练记录平台。记录 → 统计 → 复盘 → 调整计划。</p><p class="fine">版本 2.0 · 个人运动记录工具</p><button type="button" id="logoutButton" class="danger">退出登录</button></section></section>
+</div></div>
 </main>
-<script src="/static/app.js"></script>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<dialog id="installDialog"><button id="closeInstall" class="dialog-close ghost" type="button" aria-label="关闭">×</button><span class="eyebrow">TAKE YOUR PROGRESS WITH YOU</span><h2>安装循动到桌面</h2><p>安卓：用 Chrome 打开网站，在菜单中选择「安装应用」或「添加到主屏幕」。</p><p>iPhone：用 Safari 打开网站，点「分享」，再选择「添加到主屏幕」。</p><p class="fine">手机安装请使用部署后的 HTTPS 网址。浏览器或系统版本不同，入口可能略有区别。</p><button type="button" id="nativeInstall" class="hidden">立即安装</button></dialog>
 </body></html>

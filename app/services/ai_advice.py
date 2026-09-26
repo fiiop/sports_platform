@@ -4,7 +4,7 @@ import httpx
 async def generate_ai_advice(summary: dict, review: dict):
     api_key = os.getenv("AI_API_KEY", "").strip()
     if not api_key:
-        return fallback(summary, review)
+        return {"advice": fallback(summary, review), "source": "rules"}
     base = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
     model = os.getenv("AI_MODEL", "gpt-4o-mini")
     prompt = f"""你是大学生运动训练助手。请根据以下数据给出简短、可执行的建议，中文输出，包含：近7天总结、下周计划、注意事项。\n数据：{summary}\n阶段复盘：{review}"""
@@ -16,9 +16,9 @@ async def generate_ai_advice(summary: dict, review: dict):
                 json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.4},
             )
             resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
+            return {"advice": resp.json()["choices"][0]["message"]["content"], "source": "model"}
     except Exception:
-        return fallback(summary, review) + "\n\n（AI 接口调用失败，已自动使用系统规则建议。）"
+        return {"advice": fallback(summary, review) + "\n\n（AI 接口调用失败，已自动使用系统规则建议。）", "source": "rules"}
 
 def fallback(summary, review):
     if summary["avg_intensity"] >= 4.5:

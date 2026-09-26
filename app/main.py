@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import hashlib
@@ -12,13 +12,13 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
-from .models import User, Plan, ExerciseRecord, LoginSession
-from .schemas import UserIn, PlanIn, RecordIn
+from .models import User, Plan, ExerciseRecord, LoginSession, WeeklyReflection
+from .schemas import UserIn, PlanIn, RecordIn, ReflectionIn
 from .services.analytics import summary, chart_data, review
 from .services.ai_advice import generate_ai_advice
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="大学生运动计划与训练记录平台", version="1.0.0")
+app = FastAPI(title="大学生运动计划与训练记录平台", version="2.0.0")
 APP_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
@@ -134,9 +134,9 @@ def create_plan(payload: PlanIn, request: Request, db: Session = Depends(get_db)
     return {"message": "计划创建成功", "id": plan.id}
 
 @app.get("/api/records")
-def get_records(request: Request, db: Session = Depends(get_db)):
+def get_records(request: Request, db: Session = Depends(get_db), offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)):
     user = require_user(request, db)
-    rows = db.scalars(select(ExerciseRecord).where(ExerciseRecord.user_id == user.id).order_by(ExerciseRecord.exercise_date.desc(), ExerciseRecord.id.desc()).limit(100)).all()
+    rows = db.scalars(select(ExerciseRecord).where(ExerciseRecord.user_id == user.id).order_by(ExerciseRecord.exercise_date.desc(), ExerciseRecord.id.desc()).offset(offset).limit(limit)).all()
     return [record_to_dict(r) for r in rows]
 
 def record_to_dict(r):
@@ -184,4 +184,83 @@ async def ai_advice(request: Request, db: Session = Depends(get_db)):
     s = summary(db, user.id)
     r = review(db, user.id)
     advice = await generate_ai_advice(s, r)
-    return {"advice": advice}
+    return advice
+
+
+@app.get("/sw.js")
+def service_worker():
+    return FileResponse(APP_DIR / "static" / "sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+
+@app.put("/api/records/{record_id}")
+def update_record(record_id: int, payload: RecordIn, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    row = db.get(ExerciseRecord, record_id)
+    if not row or row.user_id != user.id:
+        raise HTTPException(404, "记录不存在")
+    for key, value in payload.model_dump().items():
+        setattr(row, key, value)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "同一天同类型运动已有记录，请编辑原记录")
+    db.refresh(row)
+    return record_to_dict(row)
+
+
+@app.put("/api/plans/{plan_id}")
+def update_plan(plan_id: int, payload: PlanIn, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    plan = db.get(Plan, plan_id)
+    if not plan or plan.user_id != user.id:
+        raise HTTPException(404, "计划不存在")
+    if payload.end_date < payload.start_date:
+        raise HTTPException(400, "结束日期不能早于开始日期")
+    for key, value in payload.model_dump().items():
+        setattr(plan, key, value)
+    db.commit()
+    return {"message": "计划已更新", "id": plan.id}
+
+
+@app.delete("/api/plans/{plan_id}")
+def delete_plan(plan_id: int, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    plan = db.get(Plan, plan_id)
+    if not plan or plan.user_id != user.id:
+        raise HTTPException(404, "计划不存在")
+    db.delete(plan)
+    db.commit()
+    return {"message": "计划已删除，训练记录会保留"}
+
+
+@app.get("/api/reflection")
+def get_reflection(request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    today = date.today()
+    week = today - timedelta(days=today.weekday())
+    row = db.scalar(select(WeeklyReflection).where(
+        WeeklyReflection.user_id == user.id, WeeklyReflection.week_start == week))
+    return {"week_start": week.isoformat(), "reflection": row.reflection if row else "",
+            "next_action": row.next_action if row else ""}
+
+
+@app.put("/api/reflection")
+def save_reflection(payload: ReflectionIn, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    today = date.today()
+    week = today - timedelta(days=today.weekday())
+    row = db.scalar(select(WeeklyReflection).where(
+        WeeklyReflection.user_id == user.id, WeeklyReflection.week_start == week))
+    if not row:
+        row = WeeklyReflection(user_id=user.id, week_start=week)
+        db.add(row)
+    row.reflection = payload.reflection
+    row.next_action = payload.next_action
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "复盘已在其他页面更新，请刷新后重试")
+    return {"message": "本周复盘已保存"}

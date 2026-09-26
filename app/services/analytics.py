@@ -61,4 +61,17 @@ def review(db: Session, user_id: int):
     else:
         status = "目标达成"
         advice = "近7天运动量达到设定目标，继续保持，同时关注恢复、睡眠和训练强度。"
-    return {"weekly_minutes": s["last7_minutes"], "target": target, "completion": completion, "status": status, "advice": advice}
+    recent = list(db.scalars(select(ExerciseRecord).where(
+        ExerciseRecord.user_id == user_id,
+        ExerciseRecord.exercise_date >= today - timedelta(days=13),
+        ExerciseRecord.exercise_date <= today)))
+    cutoff = today - timedelta(days=6)
+    current = [r for r in recent if r.exercise_date >= cutoff]
+    previous_minutes = sum(r.duration for r in recent if r.exercise_date < cutoff)
+    delta = s["last7_minutes"] - previous_minutes
+    change = round(delta / previous_minutes * 100) if previous_minutes else None
+    return {"previous_minutes": previous_minutes, "change_percent": change, "delta_minutes": delta,
+            "active_days": len({r.exercise_date for r in current}),
+            "plan_id": plan.id if plan else None, "plan_title": plan.title if plan else "默认周目标",
+            "period_start": cutoff.isoformat(), "period_end": today.isoformat(),
+            "weekly_minutes": s["last7_minutes"], "target": target, "completion": completion, "status": status, "advice": advice}

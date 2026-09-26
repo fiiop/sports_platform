@@ -1,3 +1,64 @@
+# 循动 · 大学生运动计划与训练记录平台
+
+手机与桌面自适应的 FastAPI 应用，支持安装到手机桌面的 PWA。核心流程为：制定计划 → 记录运动 → 查看趋势 → 保存周复盘 → 调整计划。
+
+## 快速启动（已有虚拟环境）
+
+在 PowerShell 中执行：
+
+```powershell
+cd D:\sports_platform
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+浏览器打开 http://127.0.0.1:8000 。CMD 请先用 `cd /d D:\sports_platform` 切换目录。首次安装项目可参考后面的环境安装说明。
+
+## 2.0 版本功能
+
+- 首页、记录、计划、我的四个入口；手机底部导航，桌面侧栏。
+- 原生 HTML/CSS 趋势图，无外部图表 CDN 依赖。
+- 训练记录新增、编辑、删除和分页；计划创建、编辑、删除。
+- 最近 7 天与前 7 天对比；完成率采用当前有效计划目标。
+- 每个自然周一份可更新的复盘笔记，支持记录下周行动；旧周笔记保留在数据库，当前界面只显示本周。
+- 按账号隔离的本地训练草稿，需手动恢复和提交；退出登录清除当前账号草稿。离线重新打开时显示公共离线页面，联网登录后可恢复草稿。
+- JSON 导出所有训练记录；建议明确标注规则来源或模型来源。
+- PWA manifest、192/512 图标、安装说明和 Service Worker。只缓存公共静态资源，不缓存接口、账号页面和训练数据。
+
+### 手机安装
+
+先部署到 HTTPS 地址，再在手机浏览器打开：
+
+- Android Chrome：网页「安装到手机」，或浏览器菜单中的安装/添加到主屏幕。
+- iPhone Safari：分享 → 添加到主屏幕。
+- 不支持自动安装提示的浏览器会显示手动安装说明。
+
+这是可安装网页应用，不是 APK 或应用商店安装包。普通局域网 HTTP 地址不满足 PWA 安装要求；localhost 只用于本机开发。安装要求参考 [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)。
+
+### 数据兼容与边界
+
+升级启动时自动新增 `weekly_reflections` 表，保留现有用户、记录和计划；没有删除或重建现有表。沿用同日同项目唯一记录规则，需要合并时编辑原记录。周统计是滚动 7 天，复盘笔记按服务器日历周归档（周一开始）。生产环境应配置与目标用户一致的服务器时区。
+
+本版适合小范围试用。找回密码、登录限流、数据库迁移管理、自动备份恢复及监控仍需在扩大使用前完善。暂无后台自动同步、健康平台对接和原生 App 上架能力。
+
+### 验证
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_regressions.py -v
+node tests/frontend.cjs
+node --check app/static/app.js
+```
+
+真实浏览器测试（需要本机安装 Microsoft Edge）：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe tests/browser_smoke.py
+```
+
+浏览器测试自动在 8766 端口启动临时服务，使用临时数据库，不读写 `sports.db`。结束后关闭服务。截图生成到 `artifacts/`，已排除 Git 跟踪。
+
+---
+
 # 大学生运动计划与训练记录平台
 
 一个适合课程作业演示的全栈 Web 项目，核心闭环：**每日记录 → 指标统计 → 阶段复盘 → AI训练建议**。
@@ -81,7 +142,7 @@ docker compose up -d --build
 
 系统面向“缺少持续运动计划和过程反馈”的大学生用户，围绕运动计划、日常训练记录、数据统计和阶段复盘构成闭环，并用 AI 作为个性化训练建议模块。
 
-技术架构：前端 HTML/CSS/JavaScript + Chart.js；后端 FastAPI；ORM 使用 SQLAlchemy；数据库本地 SQLite、云端 PostgreSQL；Docker 完成部署环境一致性。
+技术架构：前端 HTML/CSS/JavaScript + 原生趋势图；后端 FastAPI；ORM 使用 SQLAlchemy；数据库本地 SQLite、云端 PostgreSQL；Docker 完成部署环境一致性。
 
 ## 8. 项目结构
 

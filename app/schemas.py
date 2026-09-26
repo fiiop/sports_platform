@@ -33,3 +33,8 @@ class RecordIn(BaseModel):
 class RecordOut(RecordIn):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
+
+class ReflectionIn(BaseModel):
+    reflection: str = Field(default="", max_length=2000)
+    next_action: str = Field(default="", max_length=1000)
