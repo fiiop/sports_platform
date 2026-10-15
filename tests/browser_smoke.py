@@ -35,6 +35,11 @@ with tempfile.TemporaryDirectory(prefix="campus-move-test-") as directory:
                 page = context.new_page()
                 errors=[]
                 page.on("pageerror", lambda error: errors.append(str(error)))
+                stale_script_requests = []
+                def stale_navigation(route):
+                    stale_script_requests.append(route.request.url)
+                    route.fulfill(content_type="application/javascript", body="window.staleNavigation = true;")
+                context.route("http://127.0.0.1:8766/static/app.js", stale_navigation)
                 page.goto("http://127.0.0.1:8766/")
                 page.screenshot(path=str(ARTIFACTS / "mobile-login.png"), full_page=True)
                 page.locator("#username").fill("campus_tester")
@@ -79,7 +84,8 @@ with tempfile.TemporaryDirectory(prefix="campus-move-test-") as directory:
                 page.evaluate("window.scrollTo(0,0)")
                 page.screenshot(path=str(ARTIFACTS / "mobile-home.png"), full_page=True)
                 # Two real browser sessions: publish a map status, discover, chat, withdraw.
-                page.locator('[data-page="buddies"]').click()
+                page.locator('[data-page="buddies"] svg').tap()
+                expect(page.locator('#page-buddies')).to_be_visible()
                 expect(page.locator('#buddyList')).to_contain_text('还没有运动状态')
                 page.evaluate('buddy.map.setView([31.23,121.47],14)')
                 page.locator('#buddyMap').click(position={"x":160,"y":150})
@@ -159,6 +165,7 @@ with tempfile.TemporaryDirectory(prefix="campus-move-test-") as directory:
                 page.locator("#logoutButton").click()
                 expect(page.locator("#authPanel")).to_be_visible()
                 assert page.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('campus-move-draft:')).length") == 0
+                assert not stale_script_requests, stale_script_requests
                 assert not errors, errors
                 browser.close()
                 print("PASS: mobile/desktop layout, registration, record editing, plan adjustment, reflection persistence, XSS, drafts, offline fallback, export, install help, buddy map, two-user private chat and logout")

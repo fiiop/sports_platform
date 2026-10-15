@@ -16,6 +16,18 @@ from app.models import LoginSession
 
 
 class RegressionTests(unittest.TestCase):
+    def test_page_and_worker_share_versioned_assets(self):
+        from app.main import ASSET_VERSION
+        page = self.client.get("/")
+        self.assertEqual(page.headers["cache-control"], "no-store")
+        for name in ("app.js", "buddies.js", "style.css"):
+            url = f"/static/{name}?v={ASSET_VERSION}"
+            self.assertIn(url, page.text)
+            self.assertEqual(self.client.get(url).status_code, 200)
+        worker = self.client.get("/sw.js")
+        self.assertIn(ASSET_VERSION, worker.text)
+        self.assertNotIn("__ASSET_VERSION__", worker.text)
+
     def setUp(self):
         self.engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
         Base.metadata.create_all(self.engine)

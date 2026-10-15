@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import hashlib
@@ -20,6 +20,10 @@ from .services.ai_advice import generate_ai_advice
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="大学生运动计划与训练记录平台", version="2.0.0")
 APP_DIR = Path(__file__).resolve().parent
+ASSET_VERSION = hashlib.sha256(b"".join(
+    (APP_DIR / "static" / name).read_bytes()
+    for name in ("app.js", "buddies.js", "style.css")
+)).hexdigest()[:16]
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 def hash_password(password: str) -> str:
@@ -58,7 +62,9 @@ def require_user(request: Request, db: Session):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, db: Session = Depends(get_db)):
     user = current_user(request, db)
-    return templates.TemplateResponse(request=request, name="index.html", context={"user": user})
+    return templates.TemplateResponse(request=request, name="index.html",
+                                      context={"user": user, "asset_version": ASSET_VERSION},
+                                      headers={"Cache-Control": "no-store"})
 
 @app.post("/api/register")
 def register(payload: UserIn, db: Session = Depends(get_db)):
@@ -189,8 +195,9 @@ async def ai_advice(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/sw.js")
 def service_worker():
-    return FileResponse(APP_DIR / "static" / "sw.js", media_type="application/javascript",
-                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+    script = (APP_DIR / "static" / "sw.js").read_text(encoding="utf-8").replace("__ASSET_VERSION__", ASSET_VERSION)
+    return Response(script, media_type="application/javascript",
+                    headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
 
 
 @app.put("/api/records/{record_id}")
