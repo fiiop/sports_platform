@@ -8,12 +8,12 @@ import hashlib
 import hmac
 import os
 import secrets
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
-from .models import User, Plan, ExerciseRecord, LoginSession, WeeklyReflection
-from .schemas import UserIn, PlanIn, RecordIn, ReflectionIn
+from .models import User, Plan, ExerciseRecord, LoginSession, WeeklyReflection, BuddyStatus, BuddyChat, BuddyMessage
+from .schemas import UserIn, PlanIn, RecordIn, ReflectionIn, BuddyStatusIn, BuddyMessageIn
 from .services.analytics import summary, chart_data, review
 from .services.ai_advice import generate_ai_advice
 
@@ -264,3 +264,121 @@ def save_reflection(payload: ReflectionIn, request: Request, db: Session = Depen
         db.rollback()
         raise HTTPException(409, "复盘已在其他页面更新，请刷新后重试")
     return {"message": "本周复盘已保存"}
+
+
+def buddy_status_dict(row, username):
+    return {"user_id": row.user_id, "username": username, "exercise_type": row.exercise_type,
+            "starts_at": row.starts_at.isoformat() + "Z", "location": row.location,
+            "latitude": row.latitude, "longitude": row.longitude, "note": row.note}
+
+
+@app.get("/api/buddies")
+def list_buddies(request: Request, db: Session = Depends(get_db),
+                 exercise_type: str = Query("", max_length=50), offset: int = Query(0, ge=0),
+                 limit: int = Query(100, ge=1, le=100)):
+    require_user(request, db)
+    query = select(BuddyStatus, User.username).join(User, User.id == BuddyStatus.user_id).where(
+        BuddyStatus.starts_at > datetime.utcnow())
+    if exercise_type.strip():
+        query = query.where(BuddyStatus.exercise_type == exercise_type.strip())
+    rows = db.execute(query.order_by(BuddyStatus.starts_at, BuddyStatus.user_id).offset(offset).limit(limit)).all()
+    return [buddy_status_dict(row, name) for row, name in rows]
+
+
+@app.get("/api/buddies/me")
+def my_buddy_status(request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    row = db.get(BuddyStatus, user.id)
+    return buddy_status_dict(row, user.username) if row else None
+
+
+@app.put("/api/buddies/me")
+def save_buddy_status(payload: BuddyStatusIn, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    row = db.get(BuddyStatus, user.id)
+    if row is None:
+        row = BuddyStatus(user_id=user.id, **payload.model_dump())
+        db.add(row)
+    else:
+        for key, value in payload.model_dump().items():
+            setattr(row, key, value)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "状态已在其他页面更新，请刷新重试")
+    return buddy_status_dict(row, user.username)
+
+
+@app.delete("/api/buddies/me")
+def remove_buddy_status(request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    db.execute(delete(BuddyStatus).where(BuddyStatus.user_id == user.id))
+    db.commit()
+    return {"message": "状态已撤下，已有聊天保留"}
+
+
+@app.post("/api/buddies/{user_id}/chat")
+def start_buddy_chat(user_id: int, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    if user.id == user_id:
+        raise HTTPException(400, "不能和自己发起聊天")
+    a, b = sorted([user.id, user_id])
+    chat = db.scalar(select(BuddyChat).where(BuddyChat.user_a == a, BuddyChat.user_b == b))
+    if chat:
+        return {"id": chat.id}
+    status = db.get(BuddyStatus, user_id)
+    if not status or status.starts_at <= datetime.utcnow():
+        raise HTTPException(404, "对方状态已撤下或已过期，请刷新地图")
+    chat = BuddyChat(user_a=a, user_b=b, topic=f"{status.exercise_type} · {status.location}")
+    db.add(chat)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        chat = db.scalar(select(BuddyChat).where(BuddyChat.user_a == a, BuddyChat.user_b == b))
+        if chat is None:
+            raise HTTPException(409, "暂时无法创建聊天，请重试")
+    return {"id": chat.id}
+
+
+@app.get("/api/buddy-chats")
+def list_buddy_chats(request: Request, db: Session = Depends(get_db), offset: int = Query(0, ge=0)):
+    user = require_user(request, db)
+    chats = db.scalars(select(BuddyChat).where(or_(BuddyChat.user_a == user.id, BuddyChat.user_b == user.id))
+                       .order_by(BuddyChat.id.desc()).offset(offset).limit(100)).all()
+    results = []
+    for chat in chats:
+        other = db.get(User, chat.user_b if chat.user_a == user.id else chat.user_a)
+        last = db.scalar(select(BuddyMessage).where(BuddyMessage.chat_id == chat.id).order_by(BuddyMessage.id.desc()).limit(1))
+        results.append({"id": chat.id, "username": other.username, "topic": chat.topic,
+                        "last_message": last.body if last else "还没有消息，打个招呼吧",
+                        "last_id": last.id if last else 0})
+    return results
+
+
+def require_buddy_chat(chat_id, user, db):
+    chat = db.get(BuddyChat, chat_id)
+    if not chat or user.id not in (chat.user_a, chat.user_b):
+        raise HTTPException(404, "聊天不存在")
+    return chat
+
+
+@app.get("/api/buddy-chats/{chat_id}/messages")
+def buddy_messages(chat_id: int, request: Request, db: Session = Depends(get_db), after: int = Query(0, ge=0)):
+    user = require_user(request, db)
+    require_buddy_chat(chat_id, user, db)
+    rows = db.scalars(select(BuddyMessage).where(BuddyMessage.chat_id == chat_id, BuddyMessage.id > after)
+                      .order_by(BuddyMessage.id).limit(100)).all()
+    return [{"id": row.id, "sender_id": row.sender_id, "body": row.body,
+             "created_at": row.created_at.isoformat() + "Z"} for row in rows]
+
+
+@app.post("/api/buddy-chats/{chat_id}/messages")
+def send_buddy_message(chat_id: int, payload: BuddyMessageIn, request: Request, db: Session = Depends(get_db)):
+    user = require_user(request, db)
+    require_buddy_chat(chat_id, user, db)
+    row = BuddyMessage(chat_id=chat_id, sender_id=user.id, body=payload.body)
+    db.add(row)
+    db.commit()
+    return {"id": row.id}

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class UserIn(BaseModel):
@@ -38,3 +38,40 @@ class RecordOut(RecordIn):
 class ReflectionIn(BaseModel):
     reflection: str = Field(default="", max_length=2000)
     next_action: str = Field(default="", max_length=1000)
+
+
+class BuddyStatusIn(BaseModel):
+    exercise_type: str = Field(min_length=1, max_length=50)
+    location: str = Field(min_length=1, max_length=200)
+    starts_at: datetime
+    latitude: float = Field(ge=-85, le=85, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    note: str = Field(default="", max_length=1000)
+
+    @field_validator("exercise_type", "location")
+    @classmethod
+    def clean_text(cls, value):
+        if not value.strip():
+            raise ValueError("内容不能为空")
+        return value.strip()
+
+    @field_validator("starts_at")
+    @classmethod
+    def future_time(cls, value):
+        if value.tzinfo is None:
+            raise ValueError("时间必须包含时区")
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        if value <= datetime.utcnow():
+            raise ValueError("请选择未来的运动时间")
+        return value
+
+
+class BuddyMessageIn(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("body")
+    @classmethod
+    def nonempty(cls, value):
+        if not value.strip():
+            raise ValueError("消息不能为空")
+        return value.strip()

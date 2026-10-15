@@ -187,3 +187,17 @@ node tests/frontend.cjs
 ```
 
 云端 PostgreSQL 驱动配置参考：[SQLAlchemy 官方文档](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html)。接口测试采用 [FastAPI TestClient](https://fastapi.tiangolo.com/tutorial/testing/)。
+
+## 找运动搭子
+
+新增「搭子」入口，支持：
+
+- 每个账号发布一条当前运动状态：运动项目、具体日期和时间、公共运动地点、地图选点和补充说明；可更新或撤下。
+- 已登录用户可在地图和列表中发现状态，按运动项目筛选、分页加载；到达约定时间后自动从公开结果隐藏。
+- 点击状态「加为聊天搭子」直接建立双方私聊，同一对用户复用会话；支持消息持久化、历史消息和页面内每 4 秒刷新。当前不设好友申请审批，不提供后台推送。
+- 运动状态公开给已登录用户；私聊仅限双方访问，个人训练记录仍保持账号隔离。
+- 「定位到我附近」需浏览器定位授权（通常需 HTTPS 或 localhost），仅移动地图视野。发布位置来自用户主动点击的地图选点，不追踪实时位置。
+- 地图交互使用本地打包的 Leaflet 1.9.4（许可证见 `app/static/vendor/leaflet/LICENSE`）；底图使用 OpenStreetMap 在线瓦片，需要网络可达。底图不可用时显示提示，状态列表和聊天仍可用。遵循 [OSM 瓦片使用政策](https://operations.osmfoundation.org/policies/tiles/)，上线扩大使用前应选定适合部署地区的地图服务。
+- 数据库启动时仅新增 `buddy_statuses`、`buddy_chats`、`buddy_messages` 表，无需清空原有计划和记录。时间以 UTC 保存，前端按用户浏览器时区显示。
+
+验证：`python -m unittest discover -s tests -p "test_*.py" -v`；`node tests/frontend.cjs`；`python tests/browser_smoke.py`。浏览器用两个独立账号验证地图发布、私聊往返、状态撤下和聊天记录保留，均使用临时数据库。

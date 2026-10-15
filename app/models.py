@@ -55,3 +55,32 @@ class WeeklyReflection(Base):
     reflection: Mapped[str] = mapped_column(Text, default="")
     next_action: Mapped[str] = mapped_column(Text, default="")
     __table_args__ = (UniqueConstraint("user_id", "week_start", name="uq_reflection_week"),)
+
+
+class BuddyStatus(Base):
+    __tablename__ = "buddy_statuses"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    exercise_type: Mapped[str] = mapped_column(String(50))
+    starts_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    location: Mapped[str] = mapped_column(String(200))
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class BuddyChat(Base):
+    __tablename__ = "buddy_chats"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_a: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    user_b: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    topic: Mapped[str] = mapped_column(String(300))
+    __table_args__ = (UniqueConstraint("user_a", "user_b", name="uq_buddy_pair"),)
+
+
+class BuddyMessage(Base):
+    __tablename__ = "buddy_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("buddy_chats.id"), index=True)
+    sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

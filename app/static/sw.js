@@ -1,5 +1,5 @@
-const CACHE = 'campus-move-public-v2';
-const PUBLIC = ['/static/style.css', '/static/app.js', '/static/offline.html', '/static/manifest.webmanifest', '/static/icon-192.png', '/static/icon-512.png'];
+const CACHE = 'campus-move-public-v3';
+const PUBLIC = ['/static/style.css', '/static/app.js', '/static/buddies.js', '/static/vendor/leaflet/leaflet.js', '/static/vendor/leaflet/leaflet.css', '/static/offline.html', '/static/manifest.webmanifest', '/static/icon-192.png', '/static/icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(PUBLIC)));
 });

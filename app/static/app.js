@@ -22,12 +22,14 @@ async function busy(button, action, messageId) {
   finally {button.disabled=false;}
 }
 function navigate(page){
-  if(!['home','records','plans','profile'].includes(page)) return;
+  if(!['home','records','plans','buddies','profile'].includes(page)) return;
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==`page-${page}`));
   document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===page);if(b.dataset.page===page)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  if(typeof buddyNavigate==='function') buddyNavigate(page);
   window.scrollTo({top:0,behavior:'instant'});
 }
 function showAuth(){
+  if(typeof resetBuddies==='function') resetBuddies();
   state.epoch++; state.user=null; state.records=[]; state.plans=[]; state.review=null;
   $('authPanel').classList.remove('hidden');$('appPanel').classList.add('hidden');
   $('records').replaceChildren();$('plans').replaceChildren();$('userArea').textContent='';
