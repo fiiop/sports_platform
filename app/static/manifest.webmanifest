@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "循动 · 大学生运动日常",
+  "name": "循动 · 运动搭子与运动日常",
   "short_name": "循动",
-  "description": "计划、记录、复盘，让运动成为日常。",
+  "description": "找到一起运动的人，记录每一次运动。",
   "lang": "zh-CN",
   "start_url": "/",
   "scope": "/",

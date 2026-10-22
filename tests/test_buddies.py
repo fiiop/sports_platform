@@ -6,12 +6,52 @@ import test_regressions
 from app.main import app
 from app.models import BuddyStatus
 import unittest
+from unittest.mock import patch
+import httpx
+from app.services import map_tiles
 
 
 class BuddyTests(unittest.TestCase):
     setUp = test_regressions.RegressionTests.setUp
     tearDown = test_regressions.RegressionTests.tearDown
     login = test_regressions.RegressionTests.login
+
+    def test_map_fallback_auth_validation_and_cache(self):
+        map_tiles._cache.clear()
+        self.addCleanup(map_tiles._cache.clear)
+        url = "/api/map-tiles/2/1/1.png"
+        self.assertEqual(self.client.get(url).status_code, 401)
+        self.login()
+        body = b"\x89PNG\r\n\x1a\nmock-tile"
+        with patch.object(map_tiles.httpx, "get", return_value=httpx.Response(
+                200, content=body, headers={"cache-control": "max-age=604800", "etag": "tile-v1"})) as upstream:
+            first = self.client.get(url, headers={"referer": "https://campus.example/"})
+            self.assertEqual(first.status_code, 200)
+            self.assertEqual(first.content, body)
+            self.assertTrue(first.headers["content-type"].startswith("image/png"))
+            self.assertIn("max-age=604800", first.headers["cache-control"])
+            self.assertEqual(self.client.get(url).content, body)
+            self.assertEqual(upstream.call_count, 1)
+            self.assertIn("CampusMove", upstream.call_args.kwargs["headers"]["User-Agent"])
+            self.assertEqual(upstream.call_args.kwargs["headers"]["Referer"], "https://campus.example/")
+            for bad in ("/20/1/1.png", "/2/4/1.png", "/2/1/-1.png"):
+                self.assertEqual(self.client.get("/api/map-tiles" + bad).status_code, 404)
+            self.assertEqual(upstream.call_count, 1)
+            map_tiles._cache[(2, 1, 1)]["expires"] = 0
+            upstream.return_value = httpx.Response(304, headers={"cache-control": "max-age=60"})
+            self.assertEqual(self.client.get(url).content, body)
+            self.assertEqual(upstream.call_args.kwargs["headers"]["If-None-Match"], "tile-v1")
+
+    def test_map_fallback_does_not_cache_failures(self):
+        map_tiles._cache.clear()
+        self.addCleanup(map_tiles._cache.clear)
+        self.login()
+        url = "/api/map-tiles/2/1/1.png"
+        with patch.object(map_tiles.httpx, "get", side_effect=httpx.ConnectTimeout("unreachable")):
+            self.assertEqual(self.client.get(url).status_code, 502)
+        with patch.object(map_tiles.httpx, "get", return_value=httpx.Response(200, text="<html>error</html>")):
+            self.assertEqual(self.client.get(url).status_code, 502)
+        self.assertFalse(map_tiles._cache)
 
     def status(self, **changes):
         data = dict(exercise_type='羽毛球', location='校体育馆',

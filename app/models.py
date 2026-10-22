@@ -63,8 +63,8 @@ class BuddyStatus(Base):
     exercise_type: Mapped[str] = mapped_column(String(50))
     starts_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     location: Mapped[str] = mapped_column(String(200))
-    latitude: Mapped[float] = mapped_column(Float)
-    longitude: Mapped[float] = mapped_column(Float)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     note: Mapped[str] = mapped_column(Text, default="")
 
 
@@ -84,3 +84,23 @@ class BuddyMessage(Base):
     sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class BuddyRating(Base):
+    __tablename__ = "buddy_ratings"
+    reviewer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    target_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    score: Mapped[int] = mapped_column(Integer)
+
+
+class BuddyBlock(Base):
+    __tablename__ = "buddy_blocks"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    blocked_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+
+
+class BuddyReadCursor(Base):
+    __tablename__ = "buddy_read_cursors"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("buddy_chats.id"), primary_key=True)
+    message_id: Mapped[int] = mapped_column(Integer, default=0)

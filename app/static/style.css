@@ -22,3 +22,123 @@
 @media(max-width:640px){.nav-item{min-width:0;padding:5px 10px;flex:1}.buddy-chat-layout{grid-template-columns:1fr}#buddyChats{max-height:180px;overflow:auto}#buddyMap{height:320px}#buddyForm .form-grid{grid-template-columns:1fr}.leaflet-popup-content{min-width:190px;max-width:230px}}
 
 .nav-icon{display:block;width:28px;height:26px;flex-shrink:0}.nav-item>span{display:flex;align-items:center;justify-content:center}
+
+/* Shared visual rhythm and task-focused layouts. */
+:root{--muted:#647064}
+body{line-height:1.5}
+.icon-definitions{position:absolute;width:0;height:0;overflow:hidden}
+.nav-icon,.social-icon,.story-runners{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item{position:relative}
+.nav-item .nav-label{width:auto;font:inherit;display:inline}
+.nav-item .unread-badge{position:absolute;right:8px;top:9px;width:auto;font-size:11px}
+.unread-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;min-height:20px;padding:1px 5px;border-radius:20px;background:#b34e36;color:#fff;font-size:12px;font-weight:700;line-height:1.4}
+.story-runners{width:120px;height:110px}
+.social-icon{width:38px;height:34px;color:var(--green);flex-shrink:0}
+.orbit{z-index:0;opacity:.6}
+.heading-actions{margin:0;flex-shrink:0}
+.home-overview{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px}
+.home-overview .hero-mark{display:none}
+.home-social{display:flex;flex-direction:column;justify-content:center;background:#eaf0e2}
+.home-social .section-head{margin:0}
+.home-social p{overflow-wrap:anywhere}
+.home-social button{align-self:flex-start;margin-top:12px;background:#fff}
+.metric-heading{margin:26px 0 0}.metric-heading h2{font-size:17px;margin:0}
+.metric-heading+.metrics{margin-top:12px}
+.metric-secondary{background:#f8f9f5}
+.metric-secondary b{color:var(--muted);font-size:30px}
+.metric>span:first-child{font-size:13px}.metric-foot{color:#647064;font-size:12px}
+.fine{font-size:13px}.muted{font-size:15px}.eyebrow{font-size:12px;letter-spacing:1px}
+.disclosure,#buddyMoreDetails{border-top:1px solid var(--line);margin:18px 0;padding-top:14px}
+summary{cursor:pointer;min-height:44px;padding:8px 0;font-weight:600;color:var(--green)}
+summary:focus-visible{outline:3px solid #9dc875;outline-offset:3px}
+summary .fine{font-weight:400;margin-left:8px}
+details[open]>summary{margin-bottom:16px}
+.quick-picks,.buddy-quick-picks{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 20px}
+button.chip,.buddy-quick-picks button{border:1px solid #dbe3d2;background:#f5f7f0;color:var(--green);padding:8px 14px;min-height:40px;font-size:13px;font-weight:500}
+button.chip:hover,.buddy-quick-picks button:hover{background:#e7efdb}
+.chart-selection{min-height:24px;margin-bottom:0;color:var(--green)}
+.bar-column[role=button]{cursor:pointer;border-radius:6px}
+.bar-column:focus-visible{outline:3px solid #70955c;outline-offset:3px}
+.buddy-tabs{display:flex;gap:6px;background:#e9eee2;padding:6px;border-radius:16px;margin-bottom:22px}
+.buddy-tabs button{flex:1;background:transparent;color:#52624f;border-radius:11px}
+.buddy-tabs button.active{background:#fff;color:var(--green);box-shadow:0 2px 6px #20362d0c}
+.buddy-toolbar{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.buddy-toolbar label{flex:1;min-width:140px;margin:0}
+#buddyFilterForm label{max-width:none}
+.buddy-toolbar>button{flex-shrink:0}
+.buddy-view-switch{display:flex;gap:4px;background:#f2f5ec;border-radius:10px;padding:3px}
+.buddy-view-switch button{padding:6px 13px;min-height:38px;font-size:13px;background:transparent}
+.buddy-view-switch button.active{background:var(--green);color:#fff}
+.buddy-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.buddy-status-grid>.empty{grid-column:1/-1;padding:50px 16px;background:#f6f8f2;border-radius:14px}
+.buddy-status-grid .buddy-status{border:1px solid var(--line);border-radius:15px;padding:20px;background:#fcfdfb}
+.buddy-status h3{font-size:18px}.buddy-status .record-detail{font-size:14px}
+.buddy-status .actions{margin-top:14px}
+.buddy-state-card{background:#f0f5e8;border-radius:14px;padding:18px;margin-bottom:22px;overflow-wrap:anywhere}
+.buddy-state-card:empty{display:none}
+#buddyMapWrap{margin:18px 0}#buddyMapWrap>.actions{margin-bottom:12px}
+.buddy-map-dialog{width:min(94vw,850px);max-width:850px;max-height:94dvh;overflow:auto}
+.buddy-map-dialog #buddyMap{height:clamp(240px,45dvh,440px)}
+.buddy-chat-list{display:grid;gap:10px}
+.buddy-chat-choice{margin:0;border:1px solid var(--line);padding:18px;background:#fcfdfb}
+.buddy-chat-choice strong{font-size:16px}.buddy-chat-choice small{font-size:13px}
+.buddy-chat-choice .chat-meta{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.buddy-chat-heading{display:flex;align-items:center;gap:20px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.buddy-chat-heading h2{margin:0}.buddy-chat-heading p{margin:4px 0}
+#buddyMessages{height:clamp(240px,44dvh,520px);overscroll-behavior:contain;scrollbar-width:thin}
+.buddy-message small{font-size:11px}.buddy-message p{font-size:15px}
+#buddyMessageForm textarea{min-height:72px;max-height:160px}
+#buddyMessageForm .actions{justify-content:space-between}
+.buddy-preview-card{padding:18px;background:#f0f5e8;border-radius:14px;overflow-wrap:anywhere}
+.page-heading h1:focus{outline:none}
+@media(max-width:1050px){.home-overview{grid-template-columns:1fr}.home-social{padding:20px 24px}.home-social .section-head h2{font-size:18px}.heading-actions{margin-top:6px}.buddy-status-grid{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .content{padding:24px 16px calc(102px + env(safe-area-inset-bottom))}
+  .page-heading{margin-bottom:22px}.page-heading h1{font-size:26px;line-height:1.35}.page-heading p{font-size:14px}
+  .heading-actions{width:100%;gap:10px}.heading-actions button{flex:1;padding:12px 8px;font-size:14px}
+  .home-overview{gap:14px}.hero{padding:24px}.hero h2{font-size:25px}.hero p{font-size:14px}
+  .home-social{padding:20px}.home-social p{font-size:14px}
+  .metric>span:first-child{font-size:12px}.metric small{font-size:11px}.metric b{font-size:28px}.metric-secondary b{font-size:25px}
+  .metric-heading{margin-top:24px}.metric-heading h2{font-size:16px}
+  .form-grid{grid-template-columns:1fr;gap:0}.form-grid label,label{font-size:14px}
+  .eyebrow{font-size:11px}.fine{font-size:12px}.bar-column small{font-size:10px}
+  .nav-item .nav-label{font-size:12px}.nav-icon{width:25px;height:25px}.nav-item{gap:3px;padding:7px 4px}
+  .nav-item .unread-badge{right:7px;top:2px;font-size:10px;min-width:16px;min-height:16px}
+  .card{padding:22px 18px}.buddy-tabs{gap:2px;padding:5px}.buddy-tabs button{padding:10px 3px;font-size:14px}
+  .buddy-toolbar{gap:10px}.buddy-toolbar label{min-width:0}.buddy-toolbar>button{width:100%}
+  #buddyChats{max-height:none;overflow:visible}.buddy-status-grid{gap:12px}.buddy-status-grid .buddy-status{padding:18px}
+  .buddy-chat-heading{gap:10px;align-items:flex-start}.buddy-chat-heading button{padding:10px;font-size:12px;flex-shrink:0}.buddy-chat-heading h2{font-size:17px}
+  #buddyMessages{height:clamp(200px,40dvh,400px)}.buddy-message{max-width:92%;padding:10px 12px}
+  #buddyMessageForm .actions>.fine{display:none}#buddySend{width:100%}
+  summary .fine{display:block;margin:5px 0 0}.buddy-map-dialog{padding:20px 16px}
+  .auth-story h1{font-size:38px}.story-track{font-size:12px;gap:12px}.auth-card .eyebrow{font-size:11px}
+}
+
+/* Small movements signal progress without interrupting a task. */
+@keyframes arrive{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes breathe{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+@keyframes success{0%{transform:scale(.98);box-shadow:0 0 0 0 #92b66b44}60%{transform:scale(1.01);box-shadow:0 0 0 10px #92b66b00}100%{transform:scale(1)}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes busyPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.page:not(.hidden){animation:arrive .25s ease-out}
+.buddy-status{animation:arrive .28s ease-out both}.buddy-status:nth-child(2){animation-delay:.04s}.buddy-status:nth-child(3){animation-delay:.08s}
+.hero::after{content:'';position:absolute;width:210px;height:210px;border:1px solid #bad39726;border-radius:50%;right:-70px;top:-90px;box-shadow:0 0 0 28px #bad39708,0 0 0 58px #bad39706;pointer-events:none}
+.social-icon,.empty-runners{animation:breathe 4s ease-in-out infinite}
+.empty-runners{display:block;width:58px;height:52px;margin:0 auto 18px;fill:none;stroke:#6d8c57;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.empty-actions{justify-content:center;margin-top:20px}
+.success-pop{animation:success .55s ease-out}
+.bar-fill{transform-origin:bottom;animation:grow .5s ease-out}
+button[aria-busy=true]{animation:busyPulse 1s ease-in-out infinite}
+.rating-pill{color:#75571d;background:#faf2dc;padding:5px 9px;border-radius:20px;white-space:nowrap;font-size:12px}
+.buddy-date{color:var(--green);font-weight:600;font-size:15px;margin:12px 0 4px}
+.filter-chips{margin:16px 0 0}.filter-chips .selected{background:var(--green);color:white;border-color:var(--green)}
+.chat-tools{justify-content:flex-end;margin:-8px 0 8px}.chat-tools button{font-size:12px}
+@media(max-width:640px){
+  .buddy-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px}.buddy-toolbar label:first-child{grid-column:1/-1}.buddy-toolbar>button{grid-column:1/-1}
+  .filter-chips{flex-wrap:nowrap;overflow:auto;padding-bottom:5px;scrollbar-width:none;max-width:100%}.filter-chips button{flex-shrink:0;min-height:44px}
+  body.chat-typing #navigation{display:none}
+
+  .auth-wrap{margin:10px auto;padding:20px 18px}.auth-story{margin-bottom:24px}.auth-story h1{font-size:36px;margin:16px 0}.auth-story>p{font-size:14px;line-height:1.8}
+  .story-track{gap:7px;font-size:11px}.auth-card{padding:26px 22px}.auth-card h2{font-size:23px}.auth-card .fine{margin-top:18px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

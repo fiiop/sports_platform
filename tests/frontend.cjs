@@ -8,7 +8,7 @@ const element = id => {
 };
 const attack = '<img src=x onerror=alert(1)>';
 const storage = new Map();
-const context = vm.createContext({document: {getElementById: element},
+const context = vm.createContext({AbortController,setTimeout,clearTimeout,document: {getElementById: element},
   localStorage: {setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k),removeItem:k=>storage.delete(k)},
   fetch: async url => ({ok:true,json:async()=>url==='/api/plans'?[{id:1,title:attack,target:attack,weekly_minutes:60,start_date:'2026-01-01',end_date:'2026-12-31'}]:[{id:1,exercise_date:'2026-01-01',exercise_type:attack,duration:60,distance:0,intensity:3,feeling:attack,note:attack}]})});
 const source=fs.readFileSync('app/static/app.js','utf8');

@@ -50,14 +50,14 @@ def review(db: Session, user_id: int):
     target = plan.weekly_minutes if plan else 150
     completion = round(s["last7_minutes"] / target * 100)
     if s["last7_minutes"] == 0:
-        status = "尚未开始"
-        advice = "近7天还没有记录，先完成 20–30 分钟的轻到中等强度运动，建立连续记录习惯。"
+        status = "近7天暂无记录"
+        advice = "可以先记录一次日常运动，或约一位搭子，从适合自己的节奏开始。"
     elif s["last7_minutes"] < target * 0.6:
-        status = "需要提高频率"
-        advice = "近7天运动量偏少，可以从每周 3 次、每次 30 分钟开始，逐步增加。"
+        status = "正在积累运动时长"
+        advice = "已经留下运动记录。可以结合课程与休息安排下一次运动，也可以调整为更适合自己的目标。"
     elif s["last7_minutes"] < target:
-        status = "接近目标"
-        advice = "已经形成一定习惯，可以保持当前频率，并逐步补齐每周活动量。"
+        status = "接近时长目标"
+        advice = "近7天记录的运动时长接近目标，按自己的安排继续，留意身体感受。"
     else:
         status = "目标达成"
         advice = "近7天运动量达到设定目标，继续保持，同时关注恢复、睡眠和训练强度。"

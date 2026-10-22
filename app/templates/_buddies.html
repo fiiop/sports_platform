@@ -1,0 +1,59 @@
+<section class="page hidden" id="page-buddies">
+  <div class="page-heading"><div><span class="eyebrow">一起运动</span><h1>找到合拍的运动搭子</h1><p class="muted">约好项目、时间和场地，从一句问候开始。</p></div><button type="button" data-buddy-tab="mine">发布我的状态</button></div>
+  <nav class="buddy-tabs" aria-label="搭子功能">
+    <button type="button" data-buddy-tab="discover" class="active">发现搭子</button>
+    <button type="button" data-buddy-tab="messages">消息 <span id="buddyTabUnread" class="unread-badge hidden"></span></button>
+    <button type="button" data-buddy-tab="mine">我的状态</button>
+  </nav>
+
+  <section id="buddyDiscoverPanel" class="card">
+    <div class="section-head"><h2>谁想一起动？</h2><div class="buddy-view-switch" aria-label="查看方式"><button type="button" id="buddyListView" class="ghost active" aria-pressed="true">列表</button><button type="button" id="buddyMapView" class="ghost" aria-pressed="false">地图</button></div></div>
+    <form id="buddyFilterForm" class="buddy-toolbar">
+      <label id="buddyCustomFilter" class="hidden">其他运动项目<input id="buddyFilter" list="exerciseOptions" maxlength="50" placeholder="输入项目名称"></label>
+      <label>运动时间<select id="buddyTimeFilter"><option value="">不限时间</option><option value="today">今天</option><option value="tomorrow">明天</option><option value="week">未来 7 天</option></select></label>
+      <label>排序<select id="buddySort"><option value="rating">评分优先</option><option value="time">时间最近</option></select></label>
+      <button type="submit" id="buddyFilterApply" class="ghost hidden">查找搭子</button>
+    </form>
+    <div class="buddy-quick-picks filter-chips" aria-label="筛选运动项目"><button type="button" class="ghost" data-filter-sport="">全部</button><button type="button" class="ghost" data-filter-sport="羽毛球">羽毛球</button><button type="button" class="ghost" data-filter-sport="篮球">篮球</button><button type="button" class="ghost" data-filter-sport="跑步">跑步</button><button type="button" class="ghost" data-filter-sport="乒乓球">乒乓球</button><button type="button" id="buddyOtherSport" class="ghost">其他项目</button></div>
+    <p id="buddyListMsg" class="msg" role="status"></p>
+    <div id="buddyMapHost" class="hidden"><div id="buddyMapWrap"><div class="actions"><button type="button" id="buddyLocate" class="ghost">回到我的位置</button><span class="fine" id="buddyMapHint">点击圆点查看状态；仅填写场地的状态仍显示在列表中。</span></div><div id="buddyMap" aria-label="运动搭子地图"></div><p id="buddyMapMsg" class="msg" role="status"></p><button id="buddyMapRetry" type="button" class="ghost hidden">重新加载地图</button></div></div>
+    <div id="buddyList" class="buddy-status-grid"></div><button id="buddyMore" type="button" class="ghost hidden">加载更多状态</button>
+  </section>
+
+  <section id="buddyMinePanel" class="card hidden">
+    <div id="buddyOwnStatus" class="buddy-state-card"></div>
+    <div class="section-head"><h2 id="buddyFormTitle">发布运动状态</h2><button type="button" id="buddyRemove" class="text-button hidden">撤下状态</button></div>
+    <p class="fine">状态会向已登录用户公开。每人保留一条当前状态，到时间后自动从发现页隐藏。</p>
+    <form id="buddyForm">
+      <div class="form-grid">
+        <label>想做什么运动<input id="buddySport" list="exerciseOptions" maxlength="50" value="羽毛球" required></label>
+        <label>什么时候<input id="buddyTime" type="datetime-local" required></label>
+      </div>
+      <div class="buddy-quick-picks" aria-label="常用运动"><button type="button" class="ghost" data-buddy-sport="羽毛球">羽毛球</button><button type="button" class="ghost" data-buddy-sport="跑步">跑步</button><button type="button" class="ghost" data-buddy-sport="篮球">篮球</button><button type="button" class="ghost" data-buddy-sport="乒乓球">乒乓球</button></div>
+      <div class="buddy-quick-picks" aria-label="快捷日期"><span class="fine">快捷日期</span><button type="button" class="ghost" data-buddy-day="0">今天</button><button type="button" class="ghost" data-buddy-day="1">明天</button><button type="button" class="ghost" data-buddy-day="weekend">本周末</button></div>
+      <label>约在哪里<input id="buddyPlace" maxlength="200" placeholder="例如：学校体育馆 2 号羽毛球场" required></label>
+      <div class="buddy-quick-picks" aria-label="常用场地名称"><span class="fine">场地参考</span><button type="button" class="ghost" data-buddy-place="学校体育馆">学校体育馆</button><button type="button" class="ghost" data-buddy-place="学校田径场">学校田径场</button><button type="button" class="ghost" data-buddy-place="学校篮球场">学校篮球场</button></div>
+      <p class="fine">请补充你所在的学校和具体场地，方便搭子确认。</p>
+      <div class="actions"><button type="button" id="buddyPickPoint" class="ghost">添加地图位置（可选）</button><button type="button" id="buddyClearPoint" class="text-button hidden">移除地图位置</button><span id="buddyPoint" class="fine">未添加地图位置，可直接填写场地发布。</span></div>
+      <details id="buddyMoreDetails"><summary>补充说明（可选）</summary><label>想说的话<textarea id="buddyNote" maxlength="1000" rows="2" placeholder="例如：新手友好，自备球拍，欢迎一起练习。"></textarea></label></details>
+      <p id="buddyDraftMsg" class="fine" role="status"></p>
+      <div class="actions"><button id="buddyPublish" type="submit">预览并发布</button><button type="button" id="buddyDiscardDraft" class="text-button hidden">放弃草稿</button></div><p id="buddyFormMsg" class="msg" role="status"></p>
+    </form>
+  </section>
+
+  <section id="buddyMessagesPanel" class="card hidden">
+    <div id="buddyChatListPanel"><div class="section-head"><h2>搭子消息</h2><button id="buddyChatRefresh" type="button" class="text-button">刷新消息</button></div><p id="buddyChatsMsg" class="msg" role="status"></p><div id="buddyChats" class="buddy-chat-list"></div><button id="buddyChatsMore" type="button" class="ghost hidden">更多会话</button></div>
+    <div id="buddyConversation" class="buddy-conversation hidden">
+      <div class="buddy-chat-heading"><button type="button" id="buddyChatBack" class="ghost">‹ 消息列表</button><div><h2 id="buddyChatTitle">搭子聊天</h2><p id="buddyChatTopic" class="fine"></p></div></div>
+      <div class="actions chat-tools"><button type="button" id="buddyRate" class="text-button">评价搭子</button><button type="button" id="buddyBlock" class="text-button">加入黑名单</button></div>
+      <button type="button" id="buddyOlder" class="text-button hidden">查看更早消息</button>
+      <div id="buddyMessages" role="log" aria-label="聊天消息" aria-live="polite" tabindex="0"></div>
+      <button type="button" id="buddyNewMessages" class="ghost hidden">有新消息，点击查看 ↓</button>
+      <form id="buddyMessageForm"><label>发条消息<textarea id="buddyMessage" rows="2" maxlength="2000" required placeholder="打个招呼，确认时间和场地吧。"></textarea></label><div class="actions"><button id="buddySend" type="submit">发送消息</button><span class="fine">输入会暂存到当前浏览器，退出登录时清除。</span></div></form><p id="buddyChatMsg" class="msg" role="status"></p>
+    </div>
+  </section>
+
+  <dialog id="buddyPreviewDialog" aria-labelledby="buddyPreviewTitle"><h2 id="buddyPreviewTitle">确认公开你的运动状态</h2><div id="buddyPreview" class="buddy-preview-card"></div><p class="fine">其他已登录用户可以看到这条状态并与你聊天。</p><p id="buddyPreviewMsg" class="msg" role="status"></p><div class="actions"><button type="button" id="buddyConfirmPublish">确认发布</button><button type="button" id="buddyCancelPreview" class="ghost">返回修改</button></div></dialog>
+  <dialog id="buddyMapDialog" class="buddy-map-dialog" aria-labelledby="buddyMapDialogTitle"><h2 id="buddyMapDialogTitle">选择约定的运动地点</h2><p class="fine">点击地图选点。选择地点不会自动发布状态。</p><div id="buddyPickerHost"></div><div class="actions"><button type="button" id="buddyConfirmPoint" disabled>使用这个位置</button><button type="button" id="buddyCancelPoint" class="ghost">取消</button></div></dialog>
+  <dialog id="buddyRatingDialog" aria-labelledby="ratingTitle"><h2 id="ratingTitle">评价这位运动搭子</h2><p class="fine">双方有过消息交流后可以评分。每人对同一搭子保留一份评分，可修改；评分来自用户交流反馈。</p><form id="buddyRatingForm"><label>你的评分<select id="buddyScore" required><option value="5">★★★★★ 5 分 · 很满意</option><option value="4">★★★★ 4 分 · 满意</option><option value="3">★★★ 3 分 · 一般</option><option value="2">★★ 2 分 · 不太满意</option><option value="1">★ 1 分 · 不满意</option></select></label><p id="buddyRatingSummary" class="fine"></p><p id="buddyRatingMsg" class="msg" role="status"></p><div class="actions"><button type="submit" id="buddySaveRating">保存评分</button><button type="button" class="ghost" id="buddyCloseRating">关闭</button></div></form></dialog>
+</section>

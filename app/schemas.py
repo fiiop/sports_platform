@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 
 class UserIn(BaseModel):
     username: str = Field(min_length=2, max_length=50)
@@ -44,9 +44,15 @@ class BuddyStatusIn(BaseModel):
     exercise_type: str = Field(min_length=1, max_length=50)
     location: str = Field(min_length=1, max_length=200)
     starts_at: datetime
-    latitude: float = Field(ge=-85, le=85, allow_inf_nan=False)
-    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    latitude: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
     note: str = Field(default="", max_length=1000)
+
+    @model_validator(mode="after")
+    def coordinate_pair(self):
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("经纬度需要同时填写，或只填写场地名称")
+        return self
 
     @field_validator("exercise_type", "location")
     @classmethod
@@ -75,3 +81,7 @@ class BuddyMessageIn(BaseModel):
         if not value.strip():
             raise ValueError("消息不能为空")
         return value.strip()
+
+
+class BuddyReadIn(BaseModel):
+    message_id: int = Field(ge=0)

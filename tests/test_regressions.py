@@ -101,7 +101,7 @@ class RegressionTests(unittest.TestCase):
     def test_record_isolation_and_duplicate(self):
         self.login()
         row = self.record().json()
-        self.assertEqual(self.record().status_code, 400)
+        self.assertEqual(self.record().status_code, 409)
         other = {"username": "other", "password": "test-pass-456"}
         self.client.post("/api/register", json=other)
         self.client.post("/api/login", json=other)
