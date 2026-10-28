@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, Field
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -14,20 +14,39 @@ from sqlalchemy import select, delete, or_, and_, func, case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
-from .models import User, Plan, ExerciseRecord, LoginSession, WeeklyReflection, BuddyStatus, BuddyChat, BuddyMessage, BuddyReadCursor, BuddyRating, BuddyBlock
+from .models import User, Plan, ExerciseRecord, LoginSession, WeeklyReflection, BuddyStatus, BuddyChat, BuddyMessage, BuddyReadCursor, BuddyRating, BuddyBlock, PushSubscription
 from .schemas import UserIn, PlanIn, RecordIn, ReflectionIn, BuddyStatusIn, BuddyMessageIn, BuddyReadIn
 from .services.analytics import summary, chart_data, review
 from .services.ai_advice import generate_ai_advice
 from .services.map_tiles import get_tile
 from .services.migrations import allow_place_only_statuses
+from .services.push import router as push_router
+from .services.campus import router as campus_router, migrate_legacy, writable, lock_user, school
+from .models import Activity, Meetup, MeetupMember, UserNotice
+from .services.reminders import start_worker, deliver_pending
 
 Base.metadata.create_all(bind=engine)
 allow_place_only_statuses(engine)
-app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="3.0.0")
+migrate_legacy(engine)
+app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="4.0.0")
+app.include_router(push_router)
+app.include_router(campus_router)
+
+@app.on_event("startup")
+def start_reminders():
+    if os.getenv("REMINDERS_ENABLED", "true").lower() == "true":
+        app.state.reminder_worker = start_worker(engine)
+
+@app.on_event("shutdown")
+def stop_reminders():
+    if hasattr(app.state, "reminder_worker"):
+        stop, worker = app.state.reminder_worker
+        stop.set()
+        worker.join(timeout=2)
 APP_DIR = Path(__file__).resolve().parent
 ASSET_VERSION = hashlib.sha256(b"".join(
     (APP_DIR / "static" / name).read_bytes()
-    for name in ("app.js", "buddies.js", "style.css")
+    for name in ("app.js", "buddies.js", "notifications.js", "campus.js", "style.css", "sw.js")
 )).hexdigest()[:16]
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
@@ -109,6 +128,8 @@ def login(payload: UserIn, request: Request, response: Response, db: Session = D
 @app.post("/api/logout")
 def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     token = request.cookies.get("session", "")
+    db.execute(delete(PushSubscription).where(
+        PushSubscription.session_hash == hashlib.sha256(token.encode()).hexdigest()))
     db.execute(delete(LoginSession).where(
         LoginSession.token_hash == hashlib.sha256(token.encode()).hexdigest()))
     db.commit()
@@ -320,6 +341,9 @@ def list_buddies(request: Request, db: Session = Depends(get_db),
                  exercise_type: str = Query("", max_length=50), offset: int = Query(0, ge=0),
                  limit: int = Query(100, ge=1, le=100),
                  starts_after: datetime | None = None, starts_before: datetime | None = None,
+                 keyword: str = Query("", max_length=50), on_date: date | None = None,
+                 period: Literal["", "morning", "afternoon", "evening"] = "",
+                 utc_offset: int = Query(480, ge=-840, le=840),
                  sort: Literal["rating", "time"] = "rating"):
     user = require_user(request, db)
     for boundary in (starts_after, starts_before):
@@ -340,6 +364,21 @@ def list_buddies(request: Request, db: Session = Depends(get_db),
                     ~BuddyStatus.user_id.in_(blocked_user_ids(user.id))))
     if exercise_type.strip():
         query = query.where(BuddyStatus.exercise_type == exercise_type.strip())
+    if keyword.strip():
+        query = query.where(BuddyStatus.exercise_type.icontains(keyword.strip(), autoescape=True))
+    if on_date is not None or period:
+        local_today = (datetime.now(timezone.utc) + timedelta(minutes=utc_offset)).date()
+        if on_date is not None and not local_today <= on_date <= local_today + timedelta(days=4):
+            raise HTTPException(422, "请选择今天起五天内的日期")
+        hours = {"": (0, 24), "morning": (6, 12), "afternoon": (12, 18), "evening": (18, 24)}
+        first, last = hours[period]
+        dates = [on_date] if on_date else [local_today + timedelta(days=i) for i in range(5)]
+        windows = []
+        for day in dates:
+            midnight = datetime.combine(day, datetime.min.time()) - timedelta(minutes=utc_offset)
+            windows.append(and_(BuddyStatus.starts_at >= midnight + timedelta(hours=first),
+                                BuddyStatus.starts_at < midnight + timedelta(hours=last)))
+        query = query.where(or_(*windows))
     if starts_after is not None:
         query = query.where(BuddyStatus.starts_at >= starts_after)
     if starts_before is not None:
@@ -372,6 +411,25 @@ def my_buddy_status(request: Request, db: Session = Depends(get_db)):
 @app.put("/api/buddies/me")
 def save_buddy_status(payload: BuddyStatusIn, request: Request, db: Session = Depends(get_db)):
     user = require_user(request, db)
+    writable(db, user)
+    lock_user(db, user.id)
+    activity = db.scalar(select(Activity).where(Activity.legacy_user_id == user.id))
+    # A still-open v3 page must publish into the same discovery list and slot limit.
+    if activity is None or not activity.active or activity.starts_at <= datetime.utcnow():
+        count = db.scalar(select(func.count()).select_from(Activity).where(
+            Activity.user_id == user.id, Activity.active == 1,
+            Activity.starts_at > datetime.utcnow()))
+        if count >= 3:
+            raise HTTPException(409, "最多保留三条未开始的运动状态，请刷新后修改或撤下已有状态")
+    if activity is None:
+        activity = Activity(legacy_user_id=user.id, user_id=user.id, school=school(db, user.id),
+                            **payload.model_dump())
+        db.add(activity)
+    else:
+        for key, value in payload.model_dump().items():
+            setattr(activity, key, value)
+        activity.active = 1
+        activity.school = school(db, user.id)
     row = db.get(BuddyStatus, user.id)
     if row is None:
         row = BuddyStatus(user_id=user.id, **payload.model_dump())
@@ -390,6 +448,10 @@ def save_buddy_status(payload: BuddyStatusIn, request: Request, db: Session = De
 @app.delete("/api/buddies/me")
 def remove_buddy_status(request: Request, db: Session = Depends(get_db)):
     user = require_user(request, db)
+    lock_user(db, user.id)
+    activity = db.scalar(select(Activity).where(Activity.legacy_user_id == user.id))
+    if activity:
+        activity.active = 0
     db.execute(delete(BuddyStatus).where(BuddyStatus.user_id == user.id))
     db.commit()
     return {"message": "状态已撤下，已有聊天保留"}
@@ -398,6 +460,7 @@ def remove_buddy_status(request: Request, db: Session = Depends(get_db)):
 @app.post("/api/buddies/{user_id}/chat")
 def start_buddy_chat(user_id: int, request: Request, db: Session = Depends(get_db)):
     user = require_user(request, db)
+    writable(db, user)
     if user.id == user_id:
         raise HTTPException(400, "不能和自己发起聊天")
     ensure_not_blocked(user.id, user_id, db)
@@ -405,9 +468,10 @@ def start_buddy_chat(user_id: int, request: Request, db: Session = Depends(get_d
     chat = db.scalar(select(BuddyChat).where(BuddyChat.user_a == a, BuddyChat.user_b == b))
     if chat:
         return {"id": chat.id}
-    status = db.get(BuddyStatus, user_id)
-    if not status or status.starts_at <= datetime.utcnow():
-        raise HTTPException(404, "对方状态已撤下或已过期，请刷新地图")
+    status = db.scalar(select(Activity).where(Activity.user_id == user_id, Activity.active == 1,
+                        Activity.starts_at > datetime.utcnow()).order_by(Activity.starts_at))
+    if not status:
+        raise HTTPException(404, "对方状态已撤下或已过期，请刷新列表")
     chat = BuddyChat(user_a=a, user_b=b, topic=f"{status.exercise_type} · {status.location}")
     db.add(chat)
     try:
@@ -515,13 +579,19 @@ def buddy_messages(chat_id: int, request: Request, db: Session = Depends(get_db)
 
 
 @app.post("/api/buddy-chats/{chat_id}/messages")
-def send_buddy_message(chat_id: int, payload: BuddyMessageIn, request: Request, db: Session = Depends(get_db)):
+def send_buddy_message(chat_id: int, payload: BuddyMessageIn, request: Request,
+                       tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = require_user(request, db)
+    writable(db, user)
     chat = require_buddy_chat(chat_id, user, db)
     ensure_not_blocked(user.id, chat.user_b if chat.user_a == user.id else chat.user_a, db)
     row = BuddyMessage(chat_id=chat_id, sender_id=user.id, body=payload.body)
     db.add(row)
+    db.flush()
+    recipient_id = chat.user_b if chat.user_a == user.id else chat.user_a
+    db.add(UserNotice(user_id=recipient_id, chat_id=chat_id, message_id=row.id, title="收到新的搭子消息"))
     db.commit()
+    tasks.add_task(deliver_pending, db.get_bind())
     return {"id": row.id}
 
 
@@ -542,12 +612,13 @@ def ensure_not_blocked(user_id, other_id, db):
 
 
 def can_rate(user_id, other_id, db):
-    a, b = sorted((user_id, other_id))
-    chat = db.scalar(select(BuddyChat).where(BuddyChat.user_a == a, BuddyChat.user_b == b))
-    if not chat or user_id == other_id or is_blocked(user_id, other_id, db):
+    if user_id == other_id or is_blocked(user_id, other_id, db):
         return False
-    senders = set(db.scalars(select(BuddyMessage.sender_id).where(BuddyMessage.chat_id == chat.id).distinct()))
-    return {user_id, other_id}.issubset(senders)
+    mine = select(MeetupMember.meetup_id).where(MeetupMember.user_id == user_id,
+        MeetupMember.status == "accepted", MeetupMember.attended == 1)
+    return db.scalar(select(Meetup.id).join(MeetupMember).where(Meetup.state == "completed",
+        MeetupMember.user_id == other_id, MeetupMember.status == "accepted", MeetupMember.attended == 1,
+        Meetup.id.in_(mine)).limit(1)) is not None
 
 
 class RatingIn(BaseModel):
@@ -569,7 +640,7 @@ def buddy_rating(user_id: int, request: Request, db: Session = Depends(get_db)):
 def rate_buddy(user_id: int, payload: RatingIn, request: Request, db: Session = Depends(get_db)):
     user = require_user(request, db)
     if not can_rate(user.id, user_id, db):
-        raise HTTPException(403, "双方有过消息交流后才能评分，不能为自己或黑名单中的用户评分")
+        raise HTTPException(403, "双方确认完成同一次运动后才能评分，不能为自己或黑名单中的用户评分")
     if db.bind.dialect.name == "postgresql":
         from sqlalchemy.dialects.postgresql import insert
     else:

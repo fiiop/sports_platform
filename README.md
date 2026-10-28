@@ -1,242 +1,108 @@
 # 循动 · 大学生运动搭子与运动管理平台
 
-## 3.0 手机体验更新
+面向校园日常运动的手机优先 Web 应用：发现同校搭子 → 聊天确认运动 → 赴约与反馈 → 记录、计划和复盘。后端使用 FastAPI、SQLAlchemy，前端使用原生 HTML/CSS/JavaScript，支持 SQLite、PostgreSQL 和可安装 PWA。
 
-- 手机优先：单列快速记录、清晰的五项底部导航；搭子拆成发现、消息和我的状态；轻量动效支持系统“减少动态效果”。
-- 项目快捷筛选（羽毛球、篮球、跑步等）、今天/明天/未来七天筛选，支持评分优先或时间最近排序。
-- 搭子评分显示平均分与人数。双方在站内都发送过消息后可评分，一人对同一搭子一票，可修改；评分是交流反馈，不代表平台验证过线下约练。
-- 双向黑名单：互相隐藏状态，禁止继续发消息或创建会话；已有聊天保留，可在“我的”解除自己设置的拉黑。
-- 地图可选：文字场地也能发布；地图保留直连、备用服务端通道和重试，浏览与发布选点分开。
-- 聊天按最近消息排序，未读提示、最近一页优先、向上加载历史；页面可见时轮询，无系统级离线推送。
-- 记录、计划、复盘、运动状态和聊天正文按账号暂存在当前浏览器；退出时清理。草稿不等于已提交数据。
-- 当前计划标记、明确的近七天统计区间、历史复盘和手机可点击的趋势图。
+## 4.0 功能与规则
 
-### 正确打开项目
+### 手机界面与发现搭子
 
-**不要双击 `app/templates/index.html`。它是服务端模板，直接用 `file://` 打开不会加载完整页面。**
+- 底部导航为首页、找搭子、记录、消息、我的；首页展示近期约定和运动进度，计划可从首页或我的进入。
+- 森林绿、晴空蓝、轻盈紫、夜间、跟随系统五种外观，设置保存到账号。轻量动效尊重系统“减少动态效果”。
+- 默认学校为湘潭大学，允许修改；学校信息由用户自行填写，不代表学籍认证。发现页默认同校，可切换全部学校。
+- 列表优先、可切换地图；按运动关键字、场地、水平筛选，支持评分优先和时间最近排序。
+- 日期筛选包含今天及之后四天，共五天；时段为上午 06:00–12:00、下午 12:00–18:00、晚上 18:00–24:00。日期与时段按浏览器时区解释；不限时段时仍可看到凌晨状态。
+- 每人最多发布三条尚未开始的状态；填写项目、时间、场地、水平、时长、人数和说明。坐标可选，文字场地也能发布。
 
-在项目目录运行 `start-local.cmd`，或执行下方 uvicorn 命令，然后打开 **http://127.0.0.1:8000/**。手机查看请使用已部署的 HTTPS 网址；手机自己的 localhost 不是电脑服务。
+### 聊天、运动邀请与履约
 
-### 数据库升级
+- 私聊保留历史和未读数，支持向上加载历史、输入草稿和站内新消息提示；页面可见时轮询。
+- 私聊可发送运动邀请，双方确认项目、时间、地点与时长；待确认邀请到开始时间后显示为过期。
+- 三人及以上的活动创建多人约定，最多二十人，包含发起者；支持加入、退出和群聊。私聊约定为两人。
+- 改期需当前参加者全部同意，确认前原约定继续有效；时间冲突会提示，用户可明确选择继续。
+- 取消必须填写原因；距离开始至少两小时算正常提前取消，不足两小时标记临时取消，不自动扣评分。
+- 约定结束后，各参加者分别确认参加；全部确认后才完成。单方确认保留待确认状态，不自动判定别人缺席。
+- 只有共同完成约定并确认参加的用户才能互评；同一搭子一票，可修改。评分显示均分与人数，不代表平台核验过线下活动。
+- 公开展示完成约定次数；取消原因和履约详情仅参与者可查看。
+- 双向黑名单阻止继续私聊与新互动，隐藏彼此的发现状态；原有记录保留。已有群聊不自动解散。
+- 可举报相关用户/活动；管理员可处理举报、下架状态、限制社交功能七天或恢复。处理结果可在“我的举报”查看。
 
-启动时增量创建评分、黑名单、已读游标表，并允许搭子状态不填写坐标。既有 SQLite 的状态表在事务内迁移，保留数据、索引和触发器；PostgreSQL 只解除坐标列的非空约束。重复启动不会重复迁移。部署前按现有运维方式备份数据库；不需要删除数据库或重新注册。
+### 消息与系统通知
 
-### 回归检查
+- 支持站内通知和用户主动开启的 Web Push；用户也可关闭系统通知。退出登录撤销当前会话的服务端推送订阅。
+- 约定开始前两小时、三十分钟生成提醒；服务端约每二十秒检查一次，短暂中断只在十分钟补发窗口内处理。
+- 系统推送依赖浏览器支持、用户授权、有效登录会话、推送网络和持续运行的后端。不能保证精确到秒；服务休眠期间不能执行定时提醒。
+- iPhone / iPad 需要支持 Web Push 的系统版本（iOS / iPadOS 16.4 起），先添加到主屏幕，再从主屏幕打开并主动开启通知。[WebKit 官方说明](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
 
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -v
-node tests/frontend.cjs
-.\.venv\Scripts\python.exe tests/browser_smoke.py
-```
+### 运动管理
 
-浏览器检查使用临时数据库及无界面 Edge；覆盖 360/390/430px、两用户聊天、状态草稿、项目筛选、地图失败、评分拉黑/解除、记录、复盘与 PWA。真实手机键盘和不同系统仍建议部署后实机验收。
+- 运动计划和训练记录的创建、修改、删除；记录包含项目、日期、时长、距离、强度、主观感受等。
+- 近七天统计、趋势图、计划进度和每周复盘；同日同项目记录沿用合并规则。
+- 可导出训练记录 JSON。草稿仅保存在当前浏览器，须联网后手动提交；草稿和记录导出均不替代完整数据库备份。
+- 可选 AI 训练建议，未配置接口时使用内置规则建议。
+- PWA 仅缓存公共静态资源与离线提示，不缓存账号页面和业务接口；离线时不能聊天或确认约定。
 
----
+## 正确打开与本地运行
 
-手机与桌面自适应的 FastAPI 应用，支持安装到手机桌面的 PWA。核心流程为：制定计划 → 记录运动 → 查看趋势 → 保存周复盘 → 调整计划。
+**不要双击 `app/templates/index.html`。它是服务端模板，用 `file://` 打开会缺少样式和服务端功能。**
 
-## 快速启动（已有虚拟环境）
-
-在 PowerShell 中执行：
+已有虚拟环境时，在项目目录运行 `start-local.cmd`，或使用 PowerShell：
 
 ```powershell
 cd D:\sports_platform
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-浏览器打开 http://127.0.0.1:8000 。CMD 请先用 `cd /d D:\sports_platform` 切换目录。首次安装项目可参考后面的环境安装说明。
+浏览器打开 <http://127.0.0.1:8000/>。手机的 localhost 指向手机自身，手机使用部署好的 HTTPS 地址。
 
-## 2.0 版本功能
-
-- 首页、记录、计划、我的四个入口；手机底部导航，桌面侧栏。
-- 原生 HTML/CSS 趋势图，无外部图表 CDN 依赖。
-- 训练记录新增、编辑、删除和分页；计划创建、编辑、删除。
-- 最近 7 天与前 7 天对比；完成率采用当前有效计划目标。
-- 每个自然周一份可更新的复盘笔记，支持记录下周行动；旧周笔记保留在数据库，当前界面只显示本周。
-- 按账号隔离的本地训练草稿，需手动恢复和提交；退出登录清除当前账号草稿。离线重新打开时显示公共离线页面，联网登录后可恢复草稿。
-- JSON 导出所有训练记录；建议明确标注规则来源或模型来源。
-- PWA manifest、192/512 图标、安装说明和 Service Worker。只缓存公共静态资源，不缓存接口、账号页面和训练数据。
-
-### 手机安装
-
-先部署到 HTTPS 地址，再在手机浏览器打开：
-
-- Android Chrome：网页「安装到手机」，或浏览器菜单中的安装/添加到主屏幕。
-- iPhone Safari：分享 → 添加到主屏幕。
-- 不支持自动安装提示的浏览器会显示手动安装说明。
-
-这是可安装网页应用，不是 APK 或应用商店安装包。普通局域网 HTTP 地址不满足 PWA 安装要求；localhost 只用于本机开发。安装要求参考 [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)。
-
-### 数据兼容与边界
-
-升级启动时自动新增 `weekly_reflections` 表，保留现有用户、记录和计划；没有删除或重建现有表。沿用同日同项目唯一记录规则，需要合并时编辑原记录。周统计是滚动 7 天，复盘笔记按服务器日历周归档（周一开始）。生产环境应配置与目标用户一致的服务器时区。
-
-本版适合小范围试用。找回密码、登录限流、数据库迁移管理、自动备份恢复及监控仍需在扩大使用前完善。暂无后台自动同步、健康平台对接和原生 App 上架能力。
-
-### 验证
+首次安装：
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_regressions.py -v
-node tests/frontend.cjs
-node --check app/static/app.js
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-真实浏览器测试（需要本机安装 Microsoft Edge）：
+Android 可使用浏览器的安装/添加到主屏幕；iPhone 使用 Safari 分享 → 添加到主屏幕。这是可安装网页应用，不是 APK。
+
+## 数据库与部署
+
+未设置 `DATABASE_URL` 时默认使用项目目录的 `sports.db`。云端长期使用必须确认数据库确实持久化，不能仅凭“网站能打开”判断数据安全。
+
+- 启动时增量建表，保留现有用户、计划、记录、私聊；旧搭子状态迁入新的活动表。坐标可空迁移保留原数据。
+- PostgreSQL 的 `postgres://`、`postgresql://` 连接串会自动转为已安装的 psycopg 驱动格式。
+- 备份后再升级；改 `DATABASE_URL` 只会切换连接目标，**不会自动将 SQLite 数据复制到 PostgreSQL**。
+- HTTPS 生产环境设置 `COOKIE_SECURE=true`；本地 HTTP 保持 false。推送密钥保存在数据库中，完整备份需包含相关表。
+- Docker Compose 提供本地 PostgreSQL 与命名卷；公开部署前替换示例密码，并配置 HTTPS。不要执行删除数据卷的命令。
+
+详见 [Render 部署、备份与通知检查](docs/operations.md)。包含 Environment 页面定位、现有数据保护、管理员配置和实机验收步骤。
+
+## 管理员
+
+首次 4.0 初始化仅在数据库中已经存在精确用户名 `test02` 时授权，并记录这次尝试。后来注册同名账号不会自动成为管理员。需要显式授权或撤销时，使用服务端命令行工具；不要向他人发送数据库连接串。
+
+```powershell
+# 在已配置目标 DATABASE_URL 的服务端/受控终端中运行
+python scripts/admin_role.py status --username test02
+python scripts/admin_role.py grant --username test02
+python scripts/admin_role.py revoke --username test02
+```
+
+工具要求应用已完成 4.0 初始化；不会创建用户、运行迁移或修改相似用户名。
+
+## 测试
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -v
+node tests/frontend.cjs
+node tests/campus_frontend.cjs
 .\.venv\Scripts\python.exe tests/browser_smoke.py
 ```
 
-浏览器测试自动在 8766 端口启动临时服务，使用临时数据库，不读写 `sports.db`。结束后关闭服务。截图生成到 `artifacts/`，已排除 Git 跟踪。
+后端测试使用独立测试数据库；浏览器测试使用临时 SQLite 与无界面 Microsoft Edge，需本机已安装 Edge，截图保存在 Git 忽略的 `artifacts/`。覆盖手机布局、账号隔离、筛选、私聊、约定与群聊、主题、举报拉黑、记录计划与地图失败回退。真机系统推送、手机键盘和 PostgreSQL 部署还需按运维文档单独验收。
 
----
+## 地图与运行边界
 
-# 大学生运动计划与训练记录平台
+Leaflet 1.9.4 随项目打包（许可证位于 `app/static/vendor/leaflet/LICENSE`）；地图底图使用 OpenStreetMap。浏览器直连失败时尝试本站备用瓦片通道，支持重试；两条通道都不可达时，列表、文字场地与聊天仍可使用。没有离线地图包或批量预下载；扩大使用前应按 [OSM 瓦片使用政策](https://operations.osmfoundation.org/policies/tiles/) 选择合适的地图服务。
 
-一个适合课程作业演示的全栈 Web 项目，核心闭环：**每日记录 → 指标统计 → 阶段复盘 → AI训练建议**。
-
-## 1. 已实现功能
-
-- 用户注册 / 登录 / 退出
-- 个人运动计划创建
-- 每日运动训练记录：日期、项目、时长、距离、强度、热量、主观感受、备注
-- 近 30 天指标统计
-- 近 14 天运动时长折线图
-- 7 天阶段复盘与目标完成度
-- AI 训练建议：配置 API 后调用大模型；未配置时使用内置规则建议
-- SQLite 本地运行 / PostgreSQL 云端部署
-- Docker / Docker Compose
-
-## 2. 本地运行
-
-```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-浏览器打开 http://127.0.0.1:8000
-
-## 3. Docker 本地运行
-
-```bash
-docker compose up -d --build
-```
-
-浏览器打开 http://127.0.0.1:8000
-
-## 4. 部署到云服务器
-
-推荐做法：租一台带公网 IP 的 Linux 云服务器（Ubuntu 22.04/24.04 均可），安装 Docker，然后：
-
-```bash
-git clone <你的 Git 仓库地址>
-cd sports_platform
-docker compose up -d --build
-```
-
-然后在云安全组 / 防火墙放行 TCP 8000 端口，通过：
-
-`http://你的公网IP:8000`
-
-即可访问。
-
-正式答辩时可以进一步使用 Nginx + HTTPS 域名，把 8000 隐藏到反向代理后面。
-
-## 5. 云端数据库
-
-`docker-compose.yml` 已经包含 PostgreSQL。服务器重启后数据仍保存在 `pgdata` 卷里。
-
-## 6. AI API（可选）
-
-复制 `.env.example` 为 `.env`，填写：
-
-```env
-AI_API_BASE=https://api.openai.com/v1
-AI_API_KEY=你的APIKey
-AI_MODEL=gpt-4o-mini
-```
-
-然后：
-
-```bash
-docker compose up -d --build
-```
-
-不配置 AI API 也能运行完整作业，系统会使用本地规则生成训练建议。
-
-## 7. 作业答辩可以这样讲
-
-系统面向“缺少持续运动计划和过程反馈”的大学生用户，围绕运动计划、日常训练记录、数据统计和阶段复盘构成闭环，并用 AI 作为个性化训练建议模块。
-
-技术架构：前端 HTML/CSS/JavaScript + 原生趋势图；后端 FastAPI；ORM 使用 SQLAlchemy；数据库本地 SQLite、云端 PostgreSQL；Docker 完成部署环境一致性。
-
-## 8. 项目结构
-
-```text
-sports_platform/
-├── app/
-│   ├── main.py
-│   ├── database.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── routers/
-│   ├── services/
-│   │   ├── analytics.py
-│   │   └── ai_advice.py
-│   ├── templates/index.html
-│   └── static/
-│       ├── app.js
-│       └── style.css
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
-
-
-## 9. 本次完善与验证
-
-- 登录改为数据库保存的随机会话（仅保存令牌哈希），有效期 7 天；退出会立即撤销会话。旧的 uid Cookie 不再作为登录凭据，更新后需重新登录。
-- 阶段复盘使用今天有效的计划目标；多个有效计划取开始日期最新的一条，同日取最新创建的一条；没有有效计划时采用 150 分钟。统计窗口为近 7 天，完成率保留真实值，进度条最多显示 100%。
-- 修复计划标题、目标、运动项目、感受及备注的 HTML 注入问题；使用浏览器本地日期预填表单；图表 CDN 不可用时仍加载计划与记录。
-- 数据库自动新增 login_sessions 表，现有用户、计划及记录无需迁移或清空。
-- Docker 构建排除本地数据库、虚拟环境、Git 和 .env，避免把本地数据打包进镜像。
-- 云端 HTTPS 环境设置 COOKIE_SECURE=true；本地 HTTP 保持 false。Docker Compose 会传入该变量。多实例必须连接同一个 PostgreSQL 数据库。
-- postgres:// 和 postgresql:// 连接串自动适配已安装的 psycopg 驱动。
-
-运行回归测试（使用独立内存数据库，不修改 sports.db）：
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_regressions.py" -v
-node --check app/static/app.js
-node tests/frontend.cjs
-```
-
-云端 PostgreSQL 驱动配置参考：[SQLAlchemy 官方文档](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html)。接口测试采用 [FastAPI TestClient](https://fastapi.tiangolo.com/tutorial/testing/)。
-
-## 找运动搭子
-
-新增「搭子」入口，支持：
-
-- 每个账号发布一条当前运动状态：运动项目、具体日期和时间、公共运动地点、地图选点和补充说明；可更新或撤下。
-- 已登录用户可在地图和列表中发现状态，按运动项目筛选、分页加载；到达约定时间后自动从公开结果隐藏。
-- 点击状态「加为聊天搭子」直接建立双方私聊，同一对用户复用会话；支持消息持久化、历史消息和页面内每 4 秒刷新。当前不设好友申请审批，不提供后台推送。
-- 运动状态公开给已登录用户；私聊仅限双方访问，个人训练记录仍保持账号隔离。
-- 「定位到我附近」需浏览器定位授权（通常需 HTTPS 或 localhost），仅移动地图视野。发布位置来自用户主动点击的地图选点，不追踪实时位置。
-- 地图交互使用本地打包的 Leaflet 1.9.4（许可证见 `app/static/vendor/leaflet/LICENSE`）；底图使用 OpenStreetMap 在线瓦片，需要网络可达。底图不可用时显示提示，状态列表和聊天仍可用。遵循 [OSM 瓦片使用政策](https://operations.osmfoundation.org/policies/tiles/)，上线扩大使用前应选定适合部署地区的地图服务。
-- 数据库启动时仅新增 `buddy_statuses`、`buddy_chats`、`buddy_messages` 表，无需清空原有计划和记录。时间以 UTC 保存，前端按用户浏览器时区显示。
-
-验证：`python -m unittest discover -s tests -p "test_*.py" -v`；`node tests/frontend.cjs`；`python tests/browser_smoke.py`。浏览器用两个独立账号验证地图发布、私聊往返、状态撤下和聊天记录保留，均使用临时数据库。
-
-### 手机地图底图加载
-
-地图优先由浏览器直接加载 OpenStreetMap 瓦片；出现图片错误或等待 8 秒仍未完成时，自动改用本站 `/api/map-tiles/{z}/{x}/{y}.png` 备用通道。备用通道仅向已登录用户提供当前视野请求的地图图片，不转发聊天、位置备注或账号凭据。
-
-服务器保留可识别的 User-Agent 和页面 Referer，按上游有效期缓存；上游未提供有效期时默认 7 天。内存缓存上限为 512 张 / 32 MB，过期图片可用 ETag 重新验证，并限制同时下载数量。没有预下载地图或离线地图包。备用通道仍依赖服务器到地图服务的网络连接，两种方式都失败时可点击“重新加载地图”，状态列表和聊天可继续使用。浏览器回归测试使用本地模拟图片，验证外部底图不可达、备用切换、重试及缩放，不批量请求公共地图服务。
+当前适合校园小范围试用。找回密码、登录限流、学籍认证、自动化备份恢复、监控告警和更大规模的队列调度仍需补齐；不能把代码测试通过视为完成长期生产运营验收。

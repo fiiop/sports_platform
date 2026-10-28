@@ -26,19 +26,24 @@ async function busy(button, action, messageId) {
   finally {button.disabled=false;button.removeAttribute('aria-busy');}
 }
 function navigate(route, fromHistory=false){
-  const [page,...parts]=route.replace(/^#/,'').split('/');
+  let [page,...parts]=route.replace(/^#/,'').split('/');
+  if(page==='messages'){page='buddies';parts=['messages',...parts];}
+  const navPage=page==='buddies'&&['messages','group','appointments'].includes(parts[0])?'messages':page;
   if(!['home','records','plans','buddies','profile'].includes(page)) return;
   if(currentRoute)routeScroll.set(currentRoute,window.scrollY);
   if(!fromHistory && location.hash!==`#${route}`)history.pushState(null,'',`#${route}`);
   currentRoute=route;
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==`page-${page}`));
-  document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===page);if(b.dataset.page===page)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===navPage);if(b.dataset.page===navPage)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   if(typeof buddyNavigate==='function') buddyNavigate(page,parts.join('/'));
+  if(page==='profile'&&typeof refreshCampusStats==='function')refreshCampusStats().catch(e=>{$('profileMsg').textContent=e.message;});
   const heading=$(`page-${page}`).querySelector('h1');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
   window.scrollTo({top:fromHistory?(routeScroll.get(route)||0):0,behavior:'instant'});
 }
 function showAuth(){
   if(typeof resetBuddies==='function') resetBuddies();
+  if(typeof resetCampus==='function') resetCampus();
+  if(typeof resetNotifications==='function') resetNotifications();
   state.epoch++; state.user=null; state.records=[]; state.plans=[]; state.review=null;reflectionDirty=false;reflectionWeek='';
   $('authPanel').classList.remove('hidden');$('appPanel').classList.add('hidden');
   $('records').replaceChildren();$('plans').replaceChildren();$('userArea').textContent='';
@@ -58,7 +63,8 @@ async function showApp(user){
   $('userArea').textContent=user.username;$('greetingName').textContent=user.username;
   $('todayLabel').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
   $('password').value='';resetRecord();resetPlan();navigate(location.hash.slice(1)||'home',true);updateDraftHints();
-  await Promise.all([refresh(),loadReflection()]);
+  await Promise.all([refresh(),loadReflection(),typeof loadCampus==='function'?loadCampus():Promise.resolve()]);
+  if(typeof initNotifications==='function')initNotifications().catch(()=>{});
 }
 async function login(){if(!$('authForm').reportValidity())return; await busy($('authForm').querySelector('[type=submit]'),async()=>{await api('/api/login',{method:'POST',body:JSON.stringify({username:$('username').value,password:$('password').value})});await check();},'authMsg');}
 async function registerUser(){if(!$('authForm').reportValidity())return;await busy($('registerButton'),async()=>{await api('/api/register',{method:'POST',body:JSON.stringify({username:$('username').value,password:$('password').value})});$('authMsg').textContent='注册成功，请点击登录。';},'authMsg');}
@@ -171,7 +177,7 @@ function bind(){
   for(const [id,fn] of [['authForm',login],['recordForm',addRecord],['planForm',createPlan],['reflectionForm',saveReflection]])$(id).addEventListener('submit',e=>{e.preventDefault();fn();});
   for(const [id,fn] of Object.entries({registerButton:registerUser,logoutButton:logout,cancelRecord:resetRecord,cancelPlan:resetPlan,saveDraft:()=>saveDraft(),restoreDraft,adviceButton:getAIAdvice,exportButton:exportRecords,installButton:openInstall,profileInstall:openInstall,closeInstall:()=>$('installDialog').close(),loadMore:()=>busy($('loadMore'),()=>loadRecords(true)),reloadRecords:()=>busy($('reloadRecords'),()=>loadRecords()),adjustPlan:()=>state.review?.plan_id?editPlan(state.review.plan_id):navigate('plans')}))$(id).addEventListener('click',fn);
   $('navigation').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)navigate(b.dataset.page);});
-  document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)navigate(b.dataset.go);});
   $('records').addEventListener('click',e=>{const b=e.target.closest('button');if(b?.dataset.editRecord)editRecord(Number(b.dataset.editRecord));if(b?.dataset.deleteRecord)delRecord(Number(b.dataset.deleteRecord));});
   $('plans').addEventListener('click',e=>{const b=e.target.closest('button');if(b?.dataset.editPlan)editPlan(Number(b.dataset.editPlan));if(b?.dataset.deletePlan)delPlan(Number(b.dataset.deletePlan));});
   window.addEventListener('offline',networkState);window.addEventListener('online',()=>{networkState();notify('已恢复联网，可手动提交暂存的草稿。');});networkState();

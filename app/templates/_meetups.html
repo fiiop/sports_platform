@@ -1,0 +1,10 @@
+<section id="buddyAppointmentsPanel" class="hidden">
+  <div class="section-head"><h2>我的运动约定</h2><button type="button" id="refreshMeetups" class="text-button">刷新</button></div>
+  <p class="fine">开始前 2 小时与 30 分钟提醒。运动结束后，请按实际情况确认参加。</p>
+  <p id="meetupsMsg" class="msg" role="status"></p><div id="meetupList" class="meetup-list"></div><button type="button" id="moreMeetups" class="ghost hidden">更早的约定</button>
+</section>
+<section id="buddyGroupPanel" class="hidden">
+  <button type="button" class="text-button" data-go="buddies/appointments">‹ 我的约定</button>
+  <div id="meetupDetail"></div><p id="meetupMsg" class="msg" role="status"></p>
+  <section id="groupChatPanel" class="card hidden"><div class="section-head"><h2>组局群聊</h2><button type="button" id="groupOlder" class="text-button hidden">更早消息</button></div><div id="groupMessages" role="log" aria-live="polite" aria-label="组局消息" tabindex="0"></div><form id="groupMessageForm"><label><span class="sr-only">群聊消息</span><textarea id="groupMessage" maxlength="2000" rows="2" required placeholder="和同伴确认装备、集合地点…"></textarea></label><button type="submit" id="groupSend">发送</button><p id="groupMessageMsg" class="msg" role="status"></p></form></section>
+</section>

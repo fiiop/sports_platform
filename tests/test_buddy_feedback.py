@@ -3,6 +3,8 @@ os.environ['DATABASE_URL'] = 'sqlite://'
 import unittest
 import test_buddies
 import test_regressions
+from datetime import datetime, timedelta
+from app.models import Meetup, MeetupMember
 
 
 class BuddyFeedbackTests(unittest.TestCase):
@@ -20,13 +22,21 @@ class BuddyFeedbackTests(unittest.TestCase):
         chat = other.post(f'/api/buddies/{uid}/chat').json()['id']
         return uid, oid, chat, other
 
-    def test_rating_requires_exchange_one_vote_and_highest_first(self):
+    def test_rating_requires_completed_meetup_one_vote_and_highest_first(self):
         uid, oid, chat, other = self.pair()
         url = f'/api/buddies/{uid}/rating'
         self.assertEqual(other.put(url, json={'score': 5}).status_code, 403)
         other.post(f'/api/buddy-chats/{chat}/messages', json={'body': '一起运动吗'})
         self.assertEqual(other.put(url, json={'score': 5}).status_code, 403)
         self.client.post(f'/api/buddy-chats/{chat}/messages', json={'body': '可以'})
+        self.assertEqual(other.put(url, json={'score': 5}).status_code, 403)
+        with self.sessions() as db:
+            meeting = Meetup(owner_id=uid, chat_id=chat, exercise_type='羽毛球',
+                             starts_at=datetime.utcnow()-timedelta(hours=2), location='体育馆', state='completed')
+            db.add(meeting)
+            db.flush()
+            db.add_all([MeetupMember(meetup_id=meeting.id, user_id=u, status='accepted', attended=1) for u in (uid, oid)])
+            db.commit()
         for invalid in (0, 6, 2.5, '5', True):
             self.assertEqual(other.put(url, json={'score': invalid}).status_code, 422)
         self.assertEqual(other.put(url, json={'score': 5}).status_code, 200)

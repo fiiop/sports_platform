@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 import test_regressions
 from app.main import app
-from app.models import BuddyStatus
+from app.models import Activity, BuddyStatus
+from sqlalchemy import select
 import unittest
 from unittest.mock import patch
 import httpx
@@ -84,6 +85,8 @@ class BuddyTests(unittest.TestCase):
         with self.sessions() as db:
             row = db.get(BuddyStatus, rows[0]['user_id'])
             row.starts_at = datetime.utcnow()-timedelta(minutes=1)
+            activity = db.scalar(select(Activity).where(Activity.legacy_user_id == row.user_id))
+            activity.starts_at = row.starts_at
             db.commit()
         self.assertEqual(other.get('/api/buddies').json(), [])
         self.assertEqual(other.post(f"/api/buddies/{rows[0]['user_id']}/chat").status_code, 404)
