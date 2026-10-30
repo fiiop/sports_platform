@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -237,3 +237,24 @@ class AdminRole(Base):
 class MigrationStamp(Base):
     __tablename__ = "migration_stamps"
     name: Mapped[str] = mapped_column(String(100), primary_key=True)
+
+
+class PublicIdentity(Base):
+    __tablename__ = "public_identities"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    nickname: Mapped[str] = mapped_column(String(30), default="")
+    bio: Mapped[str] = mapped_column(String(160), default="")
+
+
+class ProfileAvatar(Base):
+    __tablename__ = "profile_avatars"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    version: Mapped[str] = mapped_column(String(32))
+    content: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+
+
+class ActivityCover(Base):
+    __tablename__ = "activity_covers"
+    activity_id: Mapped[int] = mapped_column(ForeignKey("sports_activities.id"), primary_key=True)
+    version: Mapped[str] = mapped_column(String(32))
+    content: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)

@@ -126,17 +126,21 @@ with tempfile.TemporaryDirectory(prefix="campus-move-test-") as directory:
                 page.locator('.buddy-tabs [data-buddy-tab="mine"]').click()
                 expect(page.locator('#buddyPlace')).to_have_value('学校体育馆 2 号羽毛球场')
                 page.locator('#buddyPublish').click()
-                assert page.locator('#buddyPreview img').count()==0
+                assert page.locator('#buddyPreview img[src="x"]').count()==0
                 page.locator('#buddyConfirmPublish').click()
                 expect(page.locator('#buddyFormMsg')).to_contain_text('状态已公开')
                 page.locator('.buddy-tabs [data-buddy-tab="discover"]').click()
                 page.locator('#buddyFilter').fill('羽')
                 expect(page.locator('#buddyList')).to_contain_text('羽毛球双打')
-                assert page.locator('#buddyList img').count()==0
+                assert page.locator('#buddyList img[src="x"]').count()==0
+                page.locator('#openBuddyFilters').click()
                 page.locator('[data-filter-date="'+tomorrow[:10]+'"]').click()
                 page.locator('[data-period="afternoon"]').click()
+                page.locator('#applyBuddyFilters').click()
                 expect(page.locator('#buddyList')).to_contain_text('没有符合条件')
+                page.locator('#openBuddyFilters').click()
                 page.locator('[data-period="morning"]').click()
+                page.locator('#applyBuddyFilters').click()
                 expect(page.locator('#buddyList')).to_contain_text('羽毛球双打')
                 page.screenshot(path=str(ARTIFACTS/'mobile-discover-v4.png'),full_page=True,animations='disabled')
                 peer_context=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)

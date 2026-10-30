@@ -1,6 +1,6 @@
 const VERSION = '__ASSET_VERSION__';
 const CACHE = `campus-move-public-${VERSION}`;
-const PATHS = ['/static/style.css', '/static/app.js', '/static/buddies.js', '/static/campus.js', '/static/notifications.js', '/static/vendor/leaflet/leaflet.js', '/static/vendor/leaflet/leaflet.css', '/static/offline.html', '/static/manifest.webmanifest', '/static/icon-192.png', '/static/icon-512.png'];
+const PATHS = ['/static/style.css', '/static/identity.css', '/static/discovery.css', '/static/app.js', '/static/buddies.js', '/static/campus.js', '/static/identity.js', '/static/discovery.js', '/static/notifications.js', '/static/vendor/leaflet/leaflet.js', '/static/vendor/leaflet/leaflet.css', '/static/offline.html', '/static/manifest.webmanifest', '/static/icon-192.png', '/static/icon-512.png'];
 const PUBLIC = PATHS.map(path => `${path}?v=${VERSION}`);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(PUBLIC)));

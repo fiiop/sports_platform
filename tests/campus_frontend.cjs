@@ -29,6 +29,31 @@ async function themes(){
   assert.equal(requests.length,4,'a queued save must not run under a different login');
 }
 
+async function identity(){
+  const requests=[],nodes=new Map(),state={epoch:1,user:{username:'student'}};
+  const element=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',classList:{toggle(){}},removeAttribute(){}});return nodes.get(id);};
+  const context=vm.createContext({state,$:element,
+    api:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))});
+  vm.runInContext("let profileQueue=Promise.resolve();const campus={profile:null};let ready;campus.profileReady=new Promise(resolve=>ready=resolve)",context);
+  const source=fs.readFileSync('app/static/identity.js','utf8');
+  vm.runInContext(source.slice(0,source.indexOf("$('identityForm').addEventListener")),context);
+  const name=vm.runInContext("saveIdentityChange('/api/profile/identity',{method:'PUT'})",context);
+  const photo=vm.runInContext("saveIdentityChange('/api/profile/avatar',{method:'POST'})",context);
+  await tick();assert.equal(requests.length,0,'wait for the initial profile before saving');
+  vm.runInContext("campus.profile={school:'湘潭大学'};ready()",context);
+  await tick();assert.equal(requests.length,1,'identity and image saves are serialized');
+  requests[0].resolve({nickname:'同学',display_name:'同学',bio:'一起打球',avatar_url:null});await name;await tick();
+  assert.equal(requests.length,2);assert.equal(element('userArea').textContent,'同学');
+  requests[1].resolve({nickname:'同学',display_name:'同学',bio:'一起打球',avatar_url:'/api/users/1/avatar?v=2'});await photo;
+  assert.equal(vm.runInContext('campus.profile.avatar_url',context),'/api/users/1/avatar?v=2');
+  const failed=vm.runInContext("saveIdentityChange('/api/profile/identity',{method:'PUT'})",context);
+  const handled=assert.rejects(failed,/offline/);await tick();requests[2].reject(new Error('offline'));await handled;
+  const recover=vm.runInContext("saveIdentityChange('/api/profile/avatar',{method:'DELETE'})",context);
+  await tick();assert.equal(requests.length,4);requests[3].resolve({display_name:'同学',avatar_url:null});await recover;
+  const stale=vm.runInContext("saveIdentityChange('/api/profile/identity',{method:'PUT'})",context);
+  state.epoch++;await stale;assert.equal(requests.length,4,'queued saves cannot run as the next account');
+}
+
 async function worker(){
   const listeners={},shown=[],opened=[],navigated=[],focused=[],fetched=[];
   let response={ok:true,show:false},windows=[];
@@ -53,4 +78,4 @@ async function worker(){
   listeners.fetch({request:{url:'https://campus.example/api/profile',method:'GET'},respondWith(){throw new Error('private API must not be cached');}});
 }
 
-(async()=>{await themes();await worker();console.log('PASS: serialized theme/school saves, failure recovery, login isolation, push validation and notification navigation');})().catch(error=>{console.error(error);process.exitCode=1;});
+(async()=>{await themes();await identity();await worker();console.log('PASS: serialized theme/school/identity saves, upload initialization, failure recovery, login isolation, push validation and notification navigation');})().catch(error=>{console.error(error);process.exitCode=1;});

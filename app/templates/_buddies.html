@@ -7,27 +7,38 @@
   </nav>
 
   <section id="buddyDiscoverPanel" class="card">
-    <div class="section-head"><h2>谁想一起动？</h2><div class="buddy-view-switch" aria-label="查看方式"><button type="button" id="buddyListView" class="ghost active" aria-pressed="true">列表</button><button type="button" id="buddyMapView" class="ghost" aria-pressed="false">地图</button></div></div>
     <form id="buddyFilterForm" class="discovery-filters">
-      <div class="sport-search"><label id="buddyCustomFilter"><span class="sr-only">搜索运动项目</span><input id="buddyFilter" type="search" maxlength="50" autocomplete="off" placeholder="搜运动，比如：羽毛球、篮球"></label><button type="submit" id="buddyFilterApply" aria-label="查找搭子">搜索</button></div>
+      <div class="sport-search"><label id="buddyCustomFilter"><span class="sr-only">搜索运动项目</span><input id="buddyFilter" type="search" maxlength="50" autocomplete="off" placeholder="想玩什么？搜羽毛球、篮球…"></label><button type="submit" id="buddyFilterApply" aria-label="查找搭子">搜索</button><button type="button" id="openBuddyFilters" class="filter-trigger" aria-haspopup="dialog" aria-controls="buddyFilterDialog">筛选 <span id="buddyFilterCount" class="hidden"></span></button></div>
       <input type="hidden" id="buddyTimeFilter"><input type="hidden" id="buddyPeriodFilter">
-      <div class="filter-caption"><strong>哪天出发</strong><span class="fine">今天起 5 天</span></div>
-      <div id="buddyDates" class="date-strip" aria-label="选择运动日期"></div>
-      <div class="period-strip" aria-label="选择运动时段"><button type="button" data-period="" class="selected" aria-pressed="true">全天</button><button type="button" data-period="morning" title="06:00–12:00">上午</button><button type="button" data-period="afternoon" title="12:00–18:00">下午</button><button type="button" data-period="evening" title="18:00–24:00">晚上</button></div>
-      <div class="filter-options"><label><span class="sr-only">学校范围</span><select id="buddyScope"><option value="school">只看同校</option><option value="all">全部学校</option></select></label><label><span class="sr-only">排序</span><select id="buddySort"><option value="rating">评分优先</option><option value="time">时间最近</option></select></label><button type="button" class="text-button" id="buddyMoreFilters">更多筛选</button></div>
-      <div id="buddyExtraFilters" class="form-grid hidden"><label>运动水平<select id="buddyLevelFilter"><option value="">不限水平</option><option>新手</option><option>有基础</option><option>熟练</option></select></label><label>场地关键词<input id="buddyPlaceFilter" maxlength="100" placeholder="体育馆、操场等"></label></div>
     </form>
     <div class="buddy-quick-picks filter-chips" aria-label="筛选运动项目"><button type="button" class="ghost" data-filter-sport="">全部</button><button type="button" class="ghost" data-filter-sport="羽毛球">羽毛球</button><button type="button" class="ghost" data-filter-sport="篮球">篮球</button><button type="button" class="ghost" data-filter-sport="跑步">跑步</button><button type="button" class="ghost" data-filter-sport="乒乓球">乒乓球</button><button type="button" id="buddyOtherSport" class="ghost">其他项目</button></div>
+    <div class="discovery-list-heading"><div><h2>校园里，一起出发</h2><p id="buddyFilterSummary" class="fine">同校 · 评分优先</p></div><div class="buddy-view-switch" aria-label="查看方式"><button type="button" id="buddyListView" class="ghost active" aria-pressed="true">列表</button><button type="button" id="buddyMapView" class="ghost" aria-pressed="false">地图</button></div></div>
     <p id="buddyListMsg" class="msg" role="status"></p>
     <div id="buddyMapHost" class="hidden"><div id="buddyMapWrap"><div class="actions"><button type="button" id="buddyLocate" class="ghost">回到我的位置</button><span class="fine" id="buddyMapHint">点击圆点查看状态；仅填写场地的状态仍显示在列表中。</span></div><div id="buddyMap" aria-label="运动搭子地图"></div><p id="buddyMapMsg" class="msg" role="status"></p><button id="buddyMapRetry" type="button" class="ghost hidden">重新加载地图</button></div></div>
     <div id="buddyList" class="buddy-status-grid"></div><button id="buddyMore" type="button" class="ghost hidden">加载更多状态</button>
   </section>
+
+  <dialog id="buddyFilterDialog" class="filter-sheet" aria-labelledby="buddyFilterTitle">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="section-head"><div><span class="eyebrow">找到适合你的那一场</span><h2 id="buddyFilterTitle">筛选运动搭子</h2></div><button type="button" id="closeBuddyFilters" class="text-button" aria-label="取消筛选并关闭">×</button></div>
+    <div class="filter-sheet-content">
+      <div class="filter-caption"><strong>哪天出发</strong><span class="fine">今天起 5 天</span></div>
+      <div id="buddyDates" class="date-strip" aria-label="选择运动日期"></div>
+      <div class="filter-caption"><strong>什么时段</strong></div>
+      <div class="period-strip" aria-label="选择运动时段"><button type="button" data-period="" class="selected" aria-pressed="true">全天</button><button type="button" data-period="morning" title="06:00–12:00">上午</button><button type="button" data-period="afternoon" title="12:00–18:00">下午</button><button type="button" data-period="evening" title="18:00–24:00">晚上</button></div>
+      <div class="filter-options"><label>学校范围<select id="buddyScope"><option value="school">只看同校</option><option value="all">全部学校</option></select></label><label>排列方式<select id="buddySort"><option value="rating">评分优先</option><option value="time">时间最近</option></select></label></div>
+      <button type="button" class="text-button" id="buddyMoreFilters" aria-expanded="false">水平与场地条件 ＋</button>
+      <div id="buddyExtraFilters" class="form-grid hidden"><label>运动水平<select id="buddyLevelFilter"><option value="">不限水平</option><option>新手</option><option>有基础</option><option>熟练</option></select></label><label>场地关键词<input id="buddyPlaceFilter" maxlength="100" placeholder="体育馆、操场等"></label></div>
+    </div>
+    <div class="filter-sheet-footer"><button type="button" id="resetBuddyFilters" class="ghost">重置条件</button><button type="button" id="applyBuddyFilters">查看匹配活动</button></div>
+  </dialog>
 
   <section id="buddyMinePanel" class="card hidden">
     <div id="buddyOwnStatus" class="buddy-state-card"></div>
     <div class="section-head"><h2 id="buddyFormTitle">发布运动状态</h2><button type="button" id="buddyRemove" class="text-button hidden">撤下状态</button></div>
     <p class="fine">最多发布三条未开始的状态。人数超过 2 人时创建多人组局，加入后可群聊。</p>
     <form id="buddyForm">
+      <div class="cover-editor"><div class="section-head"><label for="buddyCoverFile">给这次运动一张封面 <span class="fine">选填</span></label><button type="button" id="buddyCoverRemove" class="text-button hidden">移除图片</button></div><label class="cover-upload-zone" for="buddyCoverFile"><img id="buddyCoverPreview" class="hidden" alt="活动封面预览"><span id="buddyCoverPlaceholder"><b>＋ 添加场地或运动照片</b><small>让同伴更容易找到你们的集合点</small></span></label><input id="buddyCoverFile" type="file" accept="image/jpeg,image/png,image/webp" aria-label="选择活动封面"><p id="buddyCoverMsg" class="fine" role="status">JPEG、PNG 或 WebP，最多 5 MB；未选择照片时显示运动主题图。</p></div>
       <div class="form-grid">
         <label>想做什么运动<input id="buddySport" list="exerciseOptions" maxlength="50" value="羽毛球" required></label>
         <label>什么时候<input id="buddyTime" type="datetime-local" required></label>

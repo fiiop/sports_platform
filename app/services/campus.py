@@ -14,6 +14,7 @@ from ..models import (Activity, AdminRole, BuddyBlock, BuddyChat, BuddyRating, B
                       CampusProfile, GroupMessage, Meetup, MeetupMember, MigrationStamp,
                       ModerationAction, User, UserNotice, UserReport)
 from ..schemas import BuddyStatusIn, BuddyMessageIn
+from .media import identity_dict, cover_url
 
 router = APIRouter()
 
@@ -105,7 +106,8 @@ def profile(request: Request, db: Session = Depends(get_db)):
     row = db.get(CampusProfile, user.id)
     return {"school": school(db, user.id), "theme": row.theme if row else "forest",
             "school_verified": False, "completed": completed_count(db, user.id),
-            "is_admin": db.get(AdminRole, user.id) is not None}
+            "is_admin": db.get(AdminRole, user.id) is not None,
+            **identity_dict(db, user.id, user.username)}
 
 
 @router.put("/api/profile")
@@ -134,7 +136,22 @@ def activity_dict(db, row, viewer):
     members = db.scalar(select(func.count()).select_from(MeetupMember).where(
         MeetupMember.meetup_id == group.id, MeetupMember.status == "accepted")) if group else 1
     mine = db.get(MeetupMember, (group.id, viewer)) if group else None
+    participant_ids = [row.user_id]
+    if group:
+        hidden_members = select(ModerationAction.user_id).where(
+            ModerationAction.suspended_until > datetime.utcnow())
+        participant_ids += list(db.scalars(select(MeetupMember.user_id).where(
+            MeetupMember.meetup_id == group.id, MeetupMember.status == "accepted",
+            MeetupMember.user_id != row.user_id,
+            ~MeetupMember.user_id.in_(blocked(viewer)),
+            ~MeetupMember.user_id.in_(hidden_members)).order_by(MeetupMember.user_id).limit(2)))
+    participants = []
+    for uid in participant_ids:
+        identity = identity_dict(db, uid)
+        participants.append({"user_id": uid, "display_name": identity["display_name"],
+                             "avatar_url": identity["avatar_url"]})
     return {"id": row.id, "user_id": row.user_id, "username": db.get(User, row.user_id).username,
+            **identity_dict(db, row.user_id), "cover_url": cover_url(db, row.id), "participants": participants,
             "exercise_type": row.exercise_type, "starts_at": row.starts_at.isoformat() + "Z",
             "duration": row.duration, "location": row.location, "school": row.school, "level": row.level,
             "capacity": row.capacity, "joined": members, "meetup_id": group.id if group else None,

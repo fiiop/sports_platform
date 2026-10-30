@@ -9,7 +9,8 @@ function notify(message) { $('toast').textContent=message; $('toast').classList.
 async function api(url, options={}) {
   let r;const requestEpoch=state.epoch;
   const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),30000);
-  try {r=await fetch(url,{...options,signal:controller.signal,headers:{'Content-Type':'application/json',...options.headers},cache:'no-store'});}
+  const multipart=typeof FormData!=='undefined'&&options.body instanceof FormData;
+  try {r=await fetch(url,{...options,signal:controller.signal,headers:{...(multipart?{}:{'Content-Type':'application/json'}),...options.headers},cache:'no-store'});}
   catch {throw new Error('网络连接失败或请求超时，请检查网络后重试。');}
   finally {clearTimeout(timeout);}
   const data=await r.json().catch(()=>({}));
@@ -37,10 +38,16 @@ function navigate(route, fromHistory=false){
   document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===navPage);if(b.dataset.page===navPage)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   if(typeof buddyNavigate==='function') buddyNavigate(page,parts.join('/'));
   if(page==='profile'&&typeof refreshCampusStats==='function')refreshCampusStats().catch(e=>{$('profileMsg').textContent=e.message;});
+  if(page==='home'&&state.user&&typeof loadHomeActivities==='function'){
+    loadHomeActivities().catch(e=>{$('homeDiscoveryMsg').textContent=e.message;});
+    if(typeof loadMeetups==='function')loadMeetups().catch(()=>{});
+  }
   const heading=$(`page-${page}`).querySelector('h1');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
   window.scrollTo({top:fromHistory?(routeScroll.get(route)||0):0,behavior:'instant'});
 }
 function showAuth(){
+  if(typeof resetIdentity==='function')resetIdentity();
+  if(typeof resetDiscovery==='function')resetDiscovery();
   if(typeof resetBuddies==='function') resetBuddies();
   if(typeof resetCampus==='function') resetCampus();
   if(typeof resetNotifications==='function') resetNotifications();

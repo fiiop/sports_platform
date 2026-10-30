@@ -8,12 +8,13 @@ function buddyRead(suffix){try{return JSON.parse(localStorage.getItem(buddyKey(s
 function buddyDrop(suffix){try{localStorage.removeItem(buddyKey(suffix));}catch{}}
 function clearBuddyDrafts(){try{const prefix=buddyKey('');Object.keys(localStorage).filter(k=>k.startsWith(prefix)).forEach(k=>localStorage.removeItem(k));}catch{}}
 function resetBuddies(){
+  if(typeof resetBuddyCover==='function')resetBuddyCover();
   clearInterval(buddy.timer);clearTimeout(buddy.searchTimer);document.body.classList.remove('in-conversation','chat-typing');clearTimeout(buddy.tileTimer);buddy.mapObserver?.disconnect();buddy.map?.remove();
-  Object.assign(buddy,{map:null,layer:null,pin:null,tiles:null,point:null,own:null,dirty:false,initialized:false,chatId:null,rows:[],chats:[],active:false,timer:null,picker:false,loading:false,messageLoading:false,mine:[],editId:null});
+  Object.assign(buddy,{map:null,layer:null,pin:null,tiles:null,point:null,own:null,dirty:false,initialized:false,chatId:null,rows:[],chats:[],active:false,timer:null,picker:false,loading:false,messageLoading:false,mine:[],editId:null,savedPreview:null});
   buddy.listRequest++;buddy.chatRequest++;
   for(const id of ['buddyList','buddyChats','buddyMessages','buddyOwnStatus','buddyBlocks'])$(id).replaceChildren();
   for(const id of ['buddyUnread','buddyTabUnread'])$(id).classList.add('hidden');
-  for(const id of ['buddyPreviewDialog','buddyMapDialog','buddyRatingDialog'])if($(id).open)$(id).close();
+  for(const id of ['buddyPreviewDialog','buddyMapDialog','buddyRatingDialog','buddyFilterDialog'])if($(id).open)$(id).close();
   $('buddyForm').reset();$('buddyFilterForm').reset();$('buddyMessageForm').reset();
   $('buddyMapHost').append($('buddyMapWrap'));$('buddyPoint').textContent='未添加地图位置，可直接填写场地发布。';
   for(const id of ['buddyFormMsg','buddyChatMsg','buddyChatsMsg','buddyDraftMsg','buddyBlocksMsg'])$(id).textContent='';
@@ -55,24 +56,23 @@ function saveBuddyDraft(){
 async function loadOwnBuddy(){
   const epoch=state.epoch,rows=await api('/api/activities/mine');if(epoch!==state.epoch)return;buddy.mine=rows;buddy.own=rows.find(r=>new Date(r.starts_at)>new Date())||null;renderOwnBuddy();
   if(buddy.dirty)return;
-  const draft=buddyRead('status');if(draft){applyOwnFields(draft);buddy.dirty=true;$('buddyDraftMsg').textContent='已恢复尚未发布的本地草稿。';$('buddyDiscardDraft').classList.remove('hidden');}
+  const draft=buddyRead('status');if(draft){applyOwnFields(draft);if(typeof setBuddyCover==='function')setBuddyCover(rows.find(r=>r.id===buddy.editId));buddy.dirty=true;$('buddyDraftMsg').textContent='已恢复本地草稿，请核对后发布；未上传的图片需重新选择。';$('buddyDiscardDraft').classList.remove('hidden');}
 }
 function renderOwnBuddy(){
   $('buddyOwnStatus').innerHTML=buddy.mine.map(row=>`<div class="own-activity"><div><span class="pill">${new Date(row.starts_at)>new Date()?'已公开':'已开始'}</span><h3>${escapeHTML(row.exercise_type)}${row.capacity>2?` · ${row.joined}/${row.capacity} 人组局`:''}</h3><p class="fine">${escapeHTML(buddyTime(row.starts_at))} · ${escapeHTML(row.location)}</p></div><div class="actions">${new Date(row.starts_at)>new Date()?`<button type="button" class="text-button" data-edit-activity="${row.id}">编辑</button>`:''}${row.meetup_id?`<button type="button" class="text-button" data-open-meetup="${row.meetup_id}">查看组局</button>`:''}<button type="button" class="text-button" data-remove-activity="${row.id}">撤下</button></div></div>`).join('')||'<strong>发布第一次运动邀请</strong><p class="fine">可以同时发布最多三条未来状态。</p>';
   $('buddyFormTitle').textContent=buddy.editId?'编辑运动状态':'发布运动状态';$('buddyRemove').classList.add('hidden');
   const own=buddy.own;$('homeBuddyStatus').textContent=own?`${own.exercise_type} · ${buddyTime(own.starts_at)} · ${own.location}`:'下一次想什么时候运动？发布状态，邀请同伴一起出发。';
 }
-function editActivity(id){const row=buddy.mine.find(r=>r.id===id);if(!row)return;const d=new Date(row.starts_at);applyOwnFields({...row,edit_id:id,time:`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,point:row.latitude==null?null:{latitude:row.latitude,longitude:row.longitude}});buddy.dirty=true;renderOwnBuddy();$('buddyFormTitle').scrollIntoView({behavior:'smooth',block:'start'});}
-function newActivity(){buddy.editId=null;buddy.dirty=false;buddyDrop('status');$('buddyForm').reset();$('buddyCapacity').disabled=false;setBuddyPoint(null);$('buddyDraftMsg').textContent='';$('buddyDiscardDraft').classList.add('hidden');renderOwnBuddy();}
+function editActivity(id){const row=buddy.mine.find(r=>r.id===id);if(!row)return;const d=new Date(row.starts_at);applyOwnFields({...row,edit_id:id,time:`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,point:row.latitude==null?null:{latitude:row.latitude,longitude:row.longitude}});buddy.savedPreview=null;if(typeof setBuddyCover==='function')setBuddyCover(row);buddy.dirty=true;renderOwnBuddy();$('buddyFormTitle').scrollIntoView({behavior:'smooth',block:'start'});}
+function newActivity(){buddy.editId=null;buddy.savedPreview=null;buddy.dirty=false;buddyDrop('status');$('buddyForm').reset();$('buddyCapacity').disabled=false;setBuddyPoint(null);if(typeof resetBuddyCover==='function')resetBuddyCover();$('buddyDraftMsg').textContent='';$('buddyDiscardDraft').classList.add('hidden');renderOwnBuddy();}
 async function withdrawActivity(id){if(!confirm('撤下这条状态？已有约定和聊天记录会保留。'))return;await api(`/api/activities/${id}`,{method:'DELETE'});if(buddy.editId===id)newActivity();await loadOwnBuddy();}
 
 function setBuddyPoint(point){buddy.point=point;$('buddyPoint').textContent=point?`已选地图位置：${point.latitude.toFixed(4)}, ${point.longitude.toFixed(4)}`:'未添加地图位置，可直接填写场地发布。';$('buddyClearPoint').classList.toggle('hidden',!point);}
 function buddyCard(row){
-  const mine=row.user_id===state.user?.id,group=row.capacity>2;
-  const rating=row.rating==null?'新同伴':`★ ${row.rating.toFixed(1)} · ${row.rating_count} 人评价`;
-  return `<article class="buddy-status"><div class="status-person"><span class="mini-avatar">${escapeHTML(row.username.slice(0,1))}</span><div><strong>${escapeHTML(row.username)}${mine?' · 我':''}</strong><small>${escapeHTML(row.school||'湘潭大学')} · 学校自填</small></div><span class="rating-pill">${rating}</span></div><div class="status-sport"><h3>${escapeHTML(row.exercise_type)}</h3><span class="pill">${escapeHTML(row.level||'不限')}水平</span></div><p class="buddy-date">${escapeHTML(buddyTime(row.starts_at))} · ${row.duration||60} 分钟</p><p class="record-detail">⌖ ${escapeHTML(row.location)}</p>${row.note?`<p class="status-note">${escapeHTML(row.note)}</p>`:''}<div class="status-bottom"><span class="fine">${group?`${row.joined}/${row.capacity} 人 · 多人组局`:`已完成 ${row.completed||0} 次约定`}</span>${mine?`<button type="button" class="ghost" data-buddy-tab="mine">我的状态</button>`:group?`<button type="button" ${row.is_member?`data-open-meetup="${row.meetup_id}"`:`data-join-activity="${row.id}"`} ${!row.is_member&&row.joined>=row.capacity?'disabled':''}>${row.is_member?'进入组局':row.joined>=row.capacity?'名额已满':'加入组局 ↗'}</button>`:`<button type="button" data-buddy-user="${row.user_id}">聊一聊 ↗</button>`}</div>${!mine?`<button type="button" class="text-button report-status" data-report-activity="${row.id}" aria-label="举报 ${escapeHTML(row.username)} 的状态">举报</button>`:''}</article>`;
+  return campusActivityCard(row);
 }
 function renderBuddyStatuses(){
+  if(typeof updateDiscoveryFilterSummary==='function')updateDiscoveryFilterSummary();
   const filtered=$('buddyFilter').value||$('buddyTimeFilter').value||$('buddyPeriodFilter').value||$('buddyLevelFilter').value||$('buddyPlaceFilter').value;
   $('buddyList').innerHTML=buddy.rows.map(buddyCard).join('')||`<div class="empty"><svg class="empty-runners" aria-hidden="true"><use href="#icon-buddies"/></svg><b>${filtered?'暂时没有符合条件的搭子':'还没有运动状态'}</b>${filtered?'换个项目或时间试试。':'发出第一份邀请，让同伴找到你。'}<div class="actions empty-actions"><button type="button" class="ghost" ${filtered?'data-clear-filters':'data-buddy-tab="mine"'}>${filtered?'清除筛选':'发布我的状态'}</button></div></div>`;
   if(buddy.layer){buddy.layer.clearLayers();for(const row of buddy.rows){if(row.latitude==null||row.longitude==null)continue;L.circleMarker([row.latitude,row.longitude],{radius:9,color:row.user_id===state.user?.id?'#b76b28':'#185c45',fillOpacity:.8}).addTo(buddy.layer).bindPopup(buddyCard(row));}}
@@ -94,11 +94,18 @@ function previewBuddy(){
   buddy.preview={exercise_type:$('buddySport').value.trim(),location:$('buddyPlace').value.trim(),starts_at:date.toISOString(),note:$('buddyNote').value.trim(),latitude:buddy.point?.latitude??null,longitude:buddy.point?.longitude??null,duration:Number($('buddyDuration').value),capacity:Number($('buddyCapacity').value),level:$('buddyLevel').value};
   if(!buddy.preview.exercise_type||!buddy.preview.location){$('buddyFormMsg').textContent='请填写运动项目和场地。';return;}
   $('buddyPreview').innerHTML=`<h3>${escapeHTML(buddy.preview.exercise_type)} · ${buddy.preview.capacity>2?`${buddy.preview.capacity} 人组局`:'找搭子'}</h3><p>${escapeHTML(buddyTime(buddy.preview.starts_at))}</p><p>${escapeHTML(buddy.preview.location)}</p><p class="fine">${escapeHTML(buddy.preview.note)}</p><p class="fine">${buddy.point?'含地图位置':'仅公开文字地点，也能在列表中被找到'}</p>`;
+  const cover=typeof buddyCover!=='undefined'?(buddyCover.objectURL||(!buddyCover.remove&&buddyCover.url)):null;if(cover){const img=document.createElement('img');img.className='preview-cover';img.src=cover;img.alt='待发布的活动封面';$('buddyPreview').prepend(img);}
   $('buddyPreviewMsg').textContent='';$('buddyPreviewDialog').showModal();
 }
 async function publishBuddy(){await busy($('buddyConfirmPublish'),async()=>{
-  const epoch=state.epoch;await api(buddy.editId?`/api/activities/${buddy.editId}`:'/api/activities',{method:buddy.editId?'PUT':'POST',body:JSON.stringify(buddy.preview)});if(epoch!==state.epoch)return;
+  const epoch=state.epoch,payload=JSON.stringify(buddy.preview);
+  if(!buddy.editId||buddy.savedPreview!==payload){const row=await api(buddy.editId?`/api/activities/${buddy.editId}`:'/api/activities',{method:buddy.editId?'PUT':'POST',body:payload});if(epoch!==state.epoch)return;buddy.editId=row.id;buddy.savedPreview=payload;$('buddyCapacity').disabled=true;buddyStore('status',ownFields());}
+  // Keep the selected file and saved activity id intact while a cover upload is pending.
+  buddy.dirty=true;
+  try{if(typeof saveBuddyCover==='function')await saveBuddyCover(buddy.editId);}catch(e){if(epoch===state.epoch){await loadOwnBuddy().catch(()=>{});if(epoch!==state.epoch)return;$('buddyDraftMsg').textContent='状态已经公开，封面尚未保存；保留此页面可重试上传。';throw new Error(`状态已发布，但图片未保存：${e.message} 再次点击确认发布可重试，不会重复创建活动。`);}return;}
+  if(epoch!==state.epoch)return;
   newActivity();await loadOwnBuddy();$('buddyPreviewDialog').close();$('buddyFormMsg').textContent='状态已公开，等一个一起出发的同伴。';celebrate($('buddyOwnStatus'));notify('运动邀请已发布');
+  if(typeof homeDiscoveryRefresh==='function')homeDiscoveryRefresh();
 },'buddyPreviewMsg');}
 async function removeBuddy(){if(buddy.editId)await withdrawActivity(buddy.editId);}
 
@@ -198,14 +205,14 @@ const buddyActions={buddyConfirmPublish:publishBuddy,buddyCancelPreview:()=>$('b
 for(const [id,fn] of Object.entries(buddyActions))$(id).addEventListener('click',fn);
 $('buddyMapDialog').addEventListener('close',closePointPicker);
 $('buddyOtherSport').addEventListener('click',()=>{$('buddyCustomFilter').classList.remove('hidden');$('buddyFilterApply').classList.remove('hidden');$('buddyFilter').focus();});
-for(const id of ['buddyTimeFilter','buddySort','buddyScope','buddyLevelFilter'])$(id).addEventListener('change',()=>loadBuddyStatuses().catch(e=>$('buddyListMsg').textContent=e.message));
+for(const id of ['buddyTimeFilter','buddySort','buddyScope','buddyLevelFilter'])$(id).addEventListener('change',()=>{if(!$('buddyFilterDialog').open)loadBuddyStatuses().catch(e=>$('buddyListMsg').textContent=e.message);});
 $('page-buddies').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.buddyTab)buddyRoute(b.dataset.buddyTab);
   if(b.dataset.buddyChat)buddyRoute('messages',Number(b.dataset.buddyChat));
   if(b.dataset.buddyUser)busy(b,async()=>{const epoch=state.epoch,c=await api(`/api/buddies/${b.dataset.buddyUser}/chat`,{method:'POST'});if(epoch===state.epoch)buddyRoute('messages',c.id);},'buddyListMsg');
   if('filterSport' in b.dataset){$('buddyFilter').value=b.dataset.filterSport;busy(b,()=>loadBuddyStatuses(),'buddyListMsg');}
-  if('clearFilters' in b.dataset){$('buddyFilterForm').reset();$('buddyTimeFilter').value='';$('buddyPeriodFilter').value='';refreshBuddyDates();syncPeriodButtons();busy(b,()=>loadBuddyStatuses(),'buddyListMsg');}
+  if('clearFilters' in b.dataset){$('buddyFilterForm').reset();resetDiscoveryFilters();busy(b,()=>loadBuddyStatuses(),'buddyListMsg');}
   if(b.dataset.buddySport){$('buddySport').value=b.dataset.buddySport;saveBuddyDraft();}
   if(b.dataset.buddyPlace){$('buddyPlace').value=b.dataset.buddyPlace;setBuddyPoint(null);saveBuddyDraft();}
   if('buddyDay' in b.dataset){const date=new Date();if(b.dataset.buddyDay==='weekend')date.setDate(date.getDate()+((6-date.getDay()+7)%7));else date.setDate(date.getDate()+Number(b.dataset.buddyDay));const existing=$('buddyTime').value.slice(11)||'18:00';$('buddyTime').value=`${localDate(date)}T${existing}`;saveBuddyDraft();}
