@@ -42,7 +42,7 @@ function navigate(route, fromHistory=false){
     loadHomeActivities().catch(e=>{$('homeDiscoveryMsg').textContent=e.message;});
     if(typeof loadMeetups==='function')loadMeetups().catch(()=>{});
   }
-  const heading=$(`page-${page}`).querySelector('h1');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
+  const heading=Array.from($(`page-${page}`).querySelectorAll('h1,h2')).find(el=>el.offsetParent!==null);heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
   window.scrollTo({top:fromHistory?(routeScroll.get(route)||0):0,behavior:'instant'});
 }
 function showAuth(){
@@ -192,4 +192,7 @@ function bind(){
   $('nativeInstall').addEventListener('click',async()=>{if(!installPrompt)return;await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('nativeInstall').classList.add('hidden');$('installDialog').close();});
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
-bind();check().catch(e=>{$('authMsg').textContent=e.message;});
+// All deferred feature scripts must be available before authenticated UI rendering.
+document.addEventListener('DOMContentLoaded',()=>{
+  bind();check().catch(e=>{$('authMsg').textContent=e.message;});
+},{once:true});

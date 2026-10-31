@@ -59,15 +59,24 @@
   </section>
 
   <section id="buddyMessagesPanel" class="card hidden">
-    <div id="buddyChatListPanel"><div class="section-head"><h2>搭子消息</h2><button id="buddyChatRefresh" type="button" class="text-button">刷新</button></div><div class="notification-setting"><div><strong>不错过每一次约定</strong><p id="pushStatus" class="fine" role="status">站内提醒已开启，也可以开启手机系统通知。</p></div><button id="pushToggle" type="button" class="ghost">开启通知</button></div><details class="notice-disclosure"><summary>约定与系统通知 <span id="noticeCount" class="pill">0</span></summary><div id="noticeList"></div></details><div id="groupChats" class="buddy-chat-list"></div><p id="buddyChatsMsg" class="msg" role="status"></p><div id="buddyChats" class="buddy-chat-list"></div><button id="buddyChatsMore" type="button" class="ghost hidden">更多会话</button></div>
+    <div id="buddyChatListPanel">
+      <header class="messages-header"><button type="button" id="messageSelfAvatar" class="messages-self" data-go="profile" aria-label="查看我的资料"></button><div class="messages-title"><h1 id="messageListTitle">消息</h1><p>把下一场运动，聊成约定</p></div><button id="buddyChatRefresh" type="button" class="message-icon-button" aria-label="刷新消息" title="刷新消息"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 6.1A8 8 0 0 1 20 12M4 12a8 8 0 0 0 13.9 5.9"/></svg></button><button type="button" class="message-icon-button" data-go="buddies" aria-label="寻找新的运动搭子" title="找搭子"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></header>
+      <div class="message-utilities">
+        <details class="notice-disclosure message-notices"><summary><span class="utility-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h12v16H6zM9 2v4m6-4v4M6 9h12m-9 4h6m-6 3h3"/></svg></span><span>约定通知</span><span id="noticeCount" class="pill">0</span><span class="utility-chevron" aria-hidden="true">›</span></summary><div id="noticeList"></div></details>
+        <details class="message-notification-settings"><summary><span class="utility-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v6l2 3H4l2-3zm4 12h4"/></svg></span><span>消息提醒</span><span class="utility-chevron" aria-hidden="true">›</span></summary><div class="notification-setting"><div><strong>不错过同伴的新消息</strong><p id="pushStatus" class="fine" role="status">站内提醒已开启，也可以开启手机系统通知。</p></div><button id="pushToggle" type="button" class="ghost">开启通知</button></div></details>
+      </div>
+      <h2 id="messageGroupHeading" class="message-section-label hidden">我的组局</h2><div id="groupChats" class="buddy-chat-list"></div>
+      <div class="message-section-heading"><h2 class="message-section-label">最近聊天</h2><span id="messageConversationCount" class="fine"></span></div>
+      <p id="buddyChatsMsg" class="msg" role="status"></p><div id="buddyChats" class="buddy-chat-list"></div><button id="buddyChatsMore" type="button" class="ghost hidden">更多会话</button>
+    </div>
     <div id="buddyConversation" class="buddy-conversation hidden">
-      <div class="buddy-chat-heading"><button type="button" id="buddyChatBack" class="ghost">‹ 消息列表</button><div><h2 id="buddyChatTitle">搭子聊天</h2><p id="buddyChatTopic" class="fine"></p></div></div>
+      <div class="buddy-chat-heading"><button type="button" id="buddyChatBack" class="message-icon-button" aria-label="返回消息列表"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><span id="buddyChatAvatar" class="chat-heading-avatar" aria-hidden="true"></span><div class="chat-heading-text"><h2 id="buddyChatTitle">搭子聊天</h2><p id="buddyChatTopic" class="fine"></p></div><details id="buddyChatMenu" class="chat-more-menu"><summary aria-label="更多聊天操作" title="更多聊天操作"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></summary><div class="chat-menu-items"><button type="button" id="buddyRate" class="text-button">评价搭子</button><button type="button" id="buddyReport" class="text-button">举报</button><button type="button" id="buddyBlock" class="text-button">加入黑名单</button></div></details></div>
       <div id="pinnedMeetup" class="pinned-meetup"></div>
-      <div class="actions chat-tools"><button type="button" id="buddyInvite" class="text-button">＋ 约运动</button><button type="button" id="buddyRate" class="text-button">评价搭子</button><button type="button" id="buddyReport" class="text-button">举报</button><button type="button" id="buddyBlock" class="text-button">拉黑</button></div>
+      <div class="conversation-context"><span>时间、地点，聊好了就出发</span><button type="button" id="buddyInvite">＋ 约运动</button></div>
       <button type="button" id="buddyOlder" class="text-button hidden">查看更早消息</button>
       <div id="buddyMessages" role="log" aria-label="聊天消息" aria-live="polite" tabindex="0"></div>
       <button type="button" id="buddyNewMessages" class="ghost hidden">有新消息，点击查看 ↓</button>
-      <form id="buddyMessageForm"><label>发条消息<textarea id="buddyMessage" rows="2" maxlength="2000" required placeholder="打个招呼，确认时间和场地吧。"></textarea></label><div class="actions"><button id="buddySend" type="submit">发送消息</button><span class="fine">输入会暂存到当前浏览器，退出登录时清除。</span></div></form><p id="buddyChatMsg" class="msg" role="status"></p>
+      <form id="buddyMessageForm"><label><span class="sr-only">发条消息</span><textarea id="buddyMessage" rows="1" maxlength="2000" required placeholder="发消息，约场运动…"></textarea></label><div class="actions"><button id="buddySend" type="submit">发送</button></div></form><p id="buddyChatMsg" class="msg" role="status"></p>
     </div>
   </section>
 

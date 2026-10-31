@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import (Activity, AdminRole, BuddyBlock, BuddyChat, BuddyRating, BuddyStatus,
                       CampusProfile, GroupMessage, Meetup, MeetupMember, MigrationStamp,
-                      ModerationAction, User, UserNotice, UserReport)
+                      ModerationAction, ProfileAvatar, PublicIdentity, User, UserNotice, UserReport)
 from ..schemas import BuddyStatusIn, BuddyMessageIn
 from .media import identity_dict, cover_url
 
@@ -27,6 +27,31 @@ def auth(request, db):
 def blocked(user_id):
     return select(BuddyBlock.blocked_id).where(BuddyBlock.user_id == user_id).union(
         select(BuddyBlock.user_id).where(BuddyBlock.blocked_id == user_id))
+
+
+def chat_identities(db, user_ids, viewer):
+    """Current names and photos for history, without exposing restricted profiles.
+
+    Load each sender once for an entire message page and never fetch image bytes.
+    Historical usernames remain available, matching existing chat behavior.
+    """
+    ids = set(user_ids)
+    if not ids:
+        return {}
+    suspended = select(ModerationAction.user_id).where(
+        ModerationAction.suspended_until > datetime.utcnow())
+    hidden = set(db.scalars(select(User.id).where(
+        User.id.in_(ids), User.id != viewer,
+        or_(User.id.in_(blocked(viewer)), User.id.in_(suspended)))))
+    rows = db.execute(select(User.id, User.username, PublicIdentity.nickname, ProfileAvatar.version)
+                      .outerjoin(PublicIdentity, PublicIdentity.user_id == User.id)
+                      .outerjoin(ProfileAvatar, ProfileAvatar.user_id == User.id)
+                      .where(User.id.in_(ids))).all()
+    return {uid: {"username": username,
+                  "display_name": username if uid in hidden else nickname or username,
+                  "avatar_url": f"/api/users/{uid}/avatar?v={version}" if version and uid not in hidden else None,
+                  "identity_hidden": uid in hidden}
+            for uid, username, nickname, version in rows}
 
 
 def ensure_pair(db, a, b):
@@ -342,6 +367,7 @@ def conflict_check(db, user_id, start, duration, except_id=None, allow=False):
 
 def meeting_dict(db, meeting, viewer):
     people = members_for(db, meeting.id)
+    identities = chat_identities(db, (m.user_id for m in people), viewer)
     state = meeting.state
     if state == "pending" and meeting.starts_at <= datetime.utcnow():
         state = "expired"
@@ -353,7 +379,7 @@ def meeting_dict(db, meeting, viewer):
             "state": state, "revision": meeting.revision, "proposal": proposal, "proposal_by": meeting.proposal_by,
             "cancel_reason": meeting.cancel_reason, "cancelled_by": meeting.cancelled_by,
             "late_cancel": bool(meeting.cancelled_at and meeting.starts_at - meeting.cancelled_at < timedelta(hours=2)),
-            "members": [{"user_id": m.user_id, "username": db.get(User, m.user_id).username,
+            "members": [{"user_id": m.user_id, **identities[m.user_id],
                          "status": m.status, "attended": bool(m.attended), "voted": m.vote == meeting.revision,
                          "cancel_reason": m.cancel_reason, "late_cancel": bool(m.cancelled_at and meeting.starts_at - m.cancelled_at < timedelta(hours=2))}
                         for m in people]}
@@ -600,7 +626,8 @@ def group_messages(meeting_id: int, request: Request, db: Session = Depends(get_
     rows = db.execute(query.order_by(GroupMessage.id if after else GroupMessage.id.desc()).limit(50)).all()
     if not after:
         rows.reverse()
-    return [{"id": m.id, "sender_id": m.sender_id, "username": name, "body": m.body,
+    identities = chat_identities(db, (m.sender_id for m, _ in rows), user.id)
+    return [{"id": m.id, "sender_id": m.sender_id, **identities[m.sender_id], "body": m.body,
              "created_at": m.created_at.isoformat() + "Z"} for m, name in rows]
 
 

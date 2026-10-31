@@ -9,19 +9,21 @@ function buddyDrop(suffix){try{localStorage.removeItem(buddyKey(suffix));}catch{
 function clearBuddyDrafts(){try{const prefix=buddyKey('');Object.keys(localStorage).filter(k=>k.startsWith(prefix)).forEach(k=>localStorage.removeItem(k));}catch{}}
 function resetBuddies(){
   if(typeof resetBuddyCover==='function')resetBuddyCover();
-  clearInterval(buddy.timer);clearTimeout(buddy.searchTimer);document.body.classList.remove('in-conversation','chat-typing');clearTimeout(buddy.tileTimer);buddy.mapObserver?.disconnect();buddy.map?.remove();
+  clearInterval(buddy.timer);clearTimeout(buddy.searchTimer);document.body.classList.remove('in-conversation','chat-typing','in-messages','in-message-list');clearTimeout(buddy.tileTimer);buddy.mapObserver?.disconnect();buddy.map?.remove();
   Object.assign(buddy,{map:null,layer:null,pin:null,tiles:null,point:null,own:null,dirty:false,initialized:false,chatId:null,rows:[],chats:[],active:false,timer:null,picker:false,loading:false,messageLoading:false,mine:[],editId:null,savedPreview:null});
   buddy.listRequest++;buddy.chatRequest++;
   for(const id of ['buddyList','buddyChats','buddyMessages','buddyOwnStatus','buddyBlocks'])$(id).replaceChildren();
+  $('buddyChatAvatar').replaceChildren();delete $('buddyChatAvatar').dataset.identity;$('buddyChatTitle').textContent='搭子聊天';$('buddyChatTopic').textContent='';
+  $('messageSelfAvatar').replaceChildren();delete $('messageSelfAvatar').dataset.identity;delete $('buddyChats').dataset.signature;$('messageConversationCount').textContent='';$('buddyChatMenu').open=false;
   for(const id of ['buddyUnread','buddyTabUnread'])$(id).classList.add('hidden');
   for(const id of ['buddyPreviewDialog','buddyMapDialog','buddyRatingDialog','buddyFilterDialog'])if($(id).open)$(id).close();
-  $('buddyForm').reset();$('buddyFilterForm').reset();$('buddyMessageForm').reset();
+  $('buddyForm').reset();$('buddyFilterForm').reset();$('buddyMessageForm').reset();$('buddyMessage').style.height='44px';
   $('buddyMapHost').append($('buddyMapWrap'));$('buddyPoint').textContent='未添加地图位置，可直接填写场地发布。';
   for(const id of ['buddyFormMsg','buddyChatMsg','buddyChatsMsg','buddyDraftMsg','buddyBlocksMsg'])$(id).textContent='';
 }
 function buddyRoute(tab,id){navigate(`${tab==='messages'?'messages':`buddies/${tab}`}${id?`/${id}`:''}`);}
 function buddyNavigate(page,route=''){
-  buddy.active=page==='buddies';document.body.classList.remove('in-conversation');
+  buddy.active=page==='buddies';document.body.classList.remove('in-conversation','in-messages','in-message-list');$('buddyChatMenu').open=false;
   if(!state.user)return;
   if(!buddy.timer)buddy.timer=setInterval(()=>{if(!document.hidden&&state.user)pollBuddyChat();},4000);
   if(!buddy.initialized){buddy.initialized=true;loadOwnBuddy().catch(e=>{$('buddyFormMsg').textContent=e.message;buddy.initialized=false;});updateBuddyUnread().catch(()=>{});}
@@ -39,6 +41,7 @@ function buddyNavigate(page,route=''){
   if(buddy.tab==='group')loadMeetup(Number(id)).catch(e=>$('meetupMsg').textContent=e.message);
   if(buddy.tab==='messages'){
     const chatId=/^\d+$/.test(id||'')?Number(id):null;
+    document.body.classList.add('in-messages');document.body.classList.toggle('in-message-list',!chatId);renderMessageSelf();
     if(chatId&&buddy.chatId!==chatId){$('buddyMessage').disabled=true;$('buddySend').disabled=true;}
     document.body.classList.toggle('in-conversation',!!chatId);
     $('buddyChatListPanel').classList.toggle('hidden',!!chatId);$('buddyConversation').classList.toggle('hidden',!chatId);
@@ -134,25 +137,33 @@ function closePointPicker(){buddy.picker=false;buddy.pin?.remove();buddy.pin=nul
 
 async function updateBuddyUnread(){const epoch=state.epoch,d=await api('/api/buddy-chats/unread');if(epoch!==state.epoch)return;if(typeof notifications!=='undefined'){notifications.privateCount=d.count;renderUnread();}}
 function renderBuddyChats(){
-  $('buddyChats').innerHTML=buddy.chats.map(c=>`<button type="button" class="buddy-chat-choice" data-buddy-chat="${c.id}"><span class="chat-meta"><strong>${escapeHTML(c.username)}</strong>${c.unread_count?`<span class="unread-badge">${c.unread_count>99?'99+':c.unread_count}</span>`:''}<small>${c.last_at?escapeHTML(buddyTime(c.last_at)):''}</small></span><small>${c.blocked?'当前不可互动 · ':''}${escapeHTML(c.last_message)}</small></button>`).join('')||'<div class="empty"><b>从一句问候开始</b>在发现页找到合适的搭子，点「聊一聊」。</div>';
+  renderMessageSelf();$('messageConversationCount').textContent=buddy.chats.length?`${buddy.chats.length} 个会话`:'';
+  const signature=JSON.stringify(buddy.chats);if($('buddyChats').dataset.signature===signature)return;$('buddyChats').dataset.signature=signature;
+  $('buddyChats').innerHTML=buddy.chats.map(c=>`<button type="button" class="buddy-chat-choice chat-list-row ${c.unread_count?'has-unread':''}" data-buddy-chat="${c.id}"><span class="chat-list-avatar">${chatAvatar(c)}${c.unread_count?`<span class="unread-badge">${c.unread_count>99?'99+':c.unread_count}</span>`:''}</span><span class="chat-list-content"><span class="chat-meta"><strong>${escapeHTML(chatName(c))}</strong><small>${c.last_at?escapeHTML(chatListTime(c.last_at)):''}</small></span><small class="chat-preview">${c.blocked?'当前不可互动 · ':''}${escapeHTML(c.last_message||'打个招呼，一起约运动吧')}</small></span></button>`).join('')||'<div class="empty message-empty"><span aria-hidden="true">☏</span><b>下一场运动，从一句问候开始</b><p>找到合拍的同学，一起聊聊想玩的运动。</p><button type="button" class="ghost" data-go="buddies">去认识运动搭子 →</button></div>';
 }
+function renderMessageSelf(){if(!state.user)return;const person={...state.user,...(campus.profile||{})},signature=JSON.stringify([chatName(person),person.avatar_url]);if($('messageSelfAvatar').dataset.identity===signature)return;$('messageSelfAvatar').innerHTML=chatAvatar(person);$('messageSelfAvatar').dataset.identity=signature;}
+function chatName(person){return person?.display_name||person?.username||'运动伙伴';}
+function chatListTime(value){const d=new Date(value);return localDate(d)===localDate()?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});}
+function chatAvatar(person){const name=chatName(person),url=person?.identity_hidden?'':safeActivityImage(person?.avatar_url);return `<span class="chat-avatar" title="${escapeHTML(name)}"><span class="chat-avatar-fallback" aria-hidden="true">${escapeHTML(Array.from(name)[0]||'同')}</span>${url?`<img data-chat-photo src="${escapeHTML(url)}" alt="${escapeHTML(name)}的头像" loading="lazy">`:''}</span>`;}
+function updateChatHeading(person){const signature=JSON.stringify([chatName(person),person?.avatar_url,person?.identity_hidden]);if($('buddyChatAvatar').dataset.identity!==signature){$('buddyChatAvatar').innerHTML=chatAvatar(person);$('buddyChatAvatar').dataset.identity=signature;}$('buddyChatTitle').textContent=chatName(person);$('buddyChatTopic').textContent=person?.topic||'聊聊时间和集合地点';}
+function updateMessageIdentity(box,person,userId){if(!person)return;for(const row of box.querySelectorAll(`[data-sender="${userId}"]`)){const signature=JSON.stringify([chatName(person),person.avatar_url,person.identity_hidden]);if(row.dataset.identity===signature)continue;row.querySelector('.chat-avatar')?.remove();row.insertAdjacentHTML('afterbegin',chatAvatar(person));row.dataset.identity=signature;const label=row.querySelector('.message-sender');if(label)label.textContent=chatName(person);}}
 async function loadBuddyChats(append=false){
   const epoch=state.epoch,rows=await api(`/api/buddy-chats?offset=${append?buddy.chats.length:0}`);if(epoch!==state.epoch)return;
   const byId=new Map(buddy.chats.map(c=>[c.id,c]));for(const row of rows)byId.set(row.id,row);buddy.chats=[...byId.values()].sort((a,b)=>b.last_id-a.last_id||b.id-a.id);renderBuddyChats();
   if(append||buddy.chats.length<=100)$('buddyChatsMore').classList.toggle('hidden',rows.length<100);
-  const selected=buddy.chats.find(c=>c.id===buddy.chatId);if(selected)$('buddySend').disabled=selected.blocked||$('buddyMessage').disabled;
+  const selected=buddy.chats.find(c=>c.id===buddy.chatId);if(selected){$('buddySend').disabled=selected.blocked||$('buddyMessage').disabled;updateChatHeading(selected);updateMessageIdentity($('buddyMessages'),selected,selected.user_id);}
 }
 async function openBuddyChat(id){
   if(!buddy.active||buddy.tab!=='messages')return;
   if(buddy.chatId===id)return;loadPinnedMeetup(id).catch(()=>{});
   const epoch=state.epoch,request=++buddy.chatRequest;buddy.chatId=id;buddy.after=0;buddy.before=0;buddy.readAfter=0;
-  $('buddyMessages').replaceChildren();$('buddyMessage').value=buddyRead(`chat:${id}`)||'';$('buddyChatMsg').textContent='正在加载消息…';$('buddyNewMessages').classList.add('hidden');
-  const c=buddy.chats.find(c=>c.id===id);$('buddyChatTitle').textContent=c?`和 ${c.username} 聊聊`:'搭子聊天';$('buddyChatTopic').textContent=c?.topic||'';$('buddySend').disabled=!!c?.blocked;
+  $('buddyMessages').replaceChildren();$('buddyMessage').value=buddyRead(`chat:${id}`)||'';resizeBuddyComposer();$('buddyChatMsg').textContent='正在加载消息…';$('buddyNewMessages').classList.add('hidden');
+  const c=buddy.chats.find(c=>c.id===id);updateChatHeading(c);$('buddySend').disabled=!!c?.blocked;
   const rows=await api(`/api/buddy-chats/${id}/messages?latest=true&limit=50`);if(epoch!==state.epoch||request!==buddy.chatRequest||id!==buddy.chatId)return;
   $('buddyMessage').disabled=!!c?.blocked;$('buddySend').disabled=!!c?.blocked;
   appendBuddyMessages(rows);$('buddyOlder').classList.toggle('hidden',rows.length<50);$('buddyMessages').scrollTop=$('buddyMessages').scrollHeight;$('buddyChatMsg').textContent=c?.blocked?'当前无法互动，可在“我的”中管理黑名单。':'';await markBuddyRead();
 }
-function messageNode(row){const item=document.createElement('div');item.className=`buddy-message ${row.sender_id===state.user.id?'mine':''}`;item.dataset.message=String(row.id);const p=document.createElement('p');p.textContent=row.body;const t=document.createElement('small');t.textContent=buddyTime(row.created_at);item.append(p,t);return item;}
+function messageNode(row,group=false){const mine=row.sender_id===state.user.id,item=document.createElement('div');item.className=`buddy-message ${mine?'mine':''}`;item.dataset.message=String(row.id);item.dataset.sender=String(row.sender_id);item.dataset.identity=JSON.stringify([chatName(row),row.avatar_url,row.identity_hidden]);item.innerHTML=chatAvatar(row);const body=document.createElement('div');body.className='message-body';if(group&&!mine){const name=document.createElement('strong');name.className='message-sender';name.textContent=chatName(row);body.append(name);}const bubble=document.createElement('div');bubble.className='message-bubble';const p=document.createElement('p');p.textContent=row.body;bubble.append(p);const t=document.createElement('small');t.className='message-time';t.textContent=chatListTime(row.created_at);t.title=buddyTime(row.created_at);body.append(bubble,t);item.append(body);return item;}
 function appendBuddyMessages(rows,older=false){
   const box=$('buddyMessages'),fragment=document.createDocumentFragment();
   for(const row of rows){if(box.querySelector(`[data-message="${row.id}"]`))continue;fragment.append(messageNode(row));buddy.after=Math.max(buddy.after,row.id);buddy.before=buddy.before?Math.min(buddy.before,row.id):row.id;}
@@ -178,7 +189,7 @@ async function pollBuddyChat(){
 async function sendBuddyMessage(){if(!$('buddyMessageForm').reportValidity()||!buddy.chatId)return;await busy($('buddySend'),async()=>{
   const epoch=state.epoch,id=buddy.chatId,body=$('buddyMessage').value;await api(`/api/buddy-chats/${id}/messages`,{method:'POST',body:JSON.stringify({body})});if(epoch!==state.epoch)return;
   if(buddyRead(`chat:${id}`)===body)buddyDrop(`chat:${id}`);
-  if(id===buddy.chatId){if($('buddyMessage').value===body)$('buddyMessage').value='';$('buddyChatMsg').textContent='';$('buddyMessages').scrollTop=$('buddyMessages').scrollHeight;await loadBuddyMessages();}await loadBuddyChats();
+  if(id===buddy.chatId){if($('buddyMessage').value===body)$('buddyMessage').value='';resizeBuddyComposer();$('buddyChatMsg').textContent='';$('buddyMessages').scrollTop=$('buddyMessages').scrollHeight;await loadBuddyMessages();}await loadBuddyChats();
 },'buddyChatMsg');}
 function selectedBuddy(){return buddy.chats.find(c=>c.id===buddy.chatId);}
 async function openRating(){const c=selectedBuddy();if(!c)return;await busy($('buddyRate'),async()=>{const epoch=state.epoch,d=await api(`/api/buddies/${c.user_id}/rating`);if(epoch!==state.epoch)return;$('buddyRatingDialog').dataset.user=String(c.user_id);$('buddyScore').value=String(d.my_score||5);$('buddySaveRating').disabled=!d.can_rate;$('buddyRatingSummary').textContent=d.rating==null?'这位搭子还没有评分。':`当前 ${d.rating.toFixed(1)} 分 · ${d.rating_count} 人评价`;$('buddyRatingMsg').textContent=d.can_rate?'': '双方确认完成同一次运动后才可评分，黑名单状态下不可评分。';$('buddyRatingDialog').showModal();},'buddyChatMsg');}
@@ -191,8 +202,10 @@ $('buddyForm').addEventListener('submit',e=>{e.preventDefault();previewBuddy();}
 $('buddyForm').addEventListener('input',saveBuddyDraft);
 $('buddyFilterForm').addEventListener('submit',e=>{e.preventDefault();busy($('buddyFilterApply'),()=>loadBuddyStatuses(),'buddyListMsg');});
 $('buddyMessageForm').addEventListener('submit',e=>{e.preventDefault();sendBuddyMessage();});
-$('buddyMessage').addEventListener('input',()=>{if(buddy.chatId)buddyStore(`chat:${buddy.chatId}`,$('buddyMessage').value);});
+function resizeBuddyComposer(){const input=$('buddyMessage'),box=$('buddyMessages'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<50;input.style.height='44px';input.style.height=`${Math.min(112,Math.max(44,input.scrollHeight))}px`;if(bottom)box.scrollTop=box.scrollHeight;}
+$('buddyMessage').addEventListener('input',()=>{if(buddy.chatId)buddyStore(`chat:${buddy.chatId}`,$('buddyMessage').value);resizeBuddyComposer();});
 $('buddyMessages').addEventListener('scroll',()=>markBuddyRead().catch(()=>{}));
+document.addEventListener('error',event=>{const image=event.target;if(image.tagName!=='IMG'||!image.hasAttribute('data-chat-photo'))return;if(!image.dataset.retried){image.dataset.retried='true';image.src=image.getAttribute('src')+'&retry=1';}else image.remove();},true);
 $('buddyRatingForm').addEventListener('submit',e=>{e.preventDefault();saveRating();});
 const buddyActions={buddyConfirmPublish:publishBuddy,buddyCancelPreview:()=>$('buddyPreviewDialog').close(),buddyRemove:removeBuddy,
   buddyDiscardDraft:()=>{if(confirm('放弃尚未公开的修改？'))newActivity();},buddyNewStatus:newActivity,
@@ -204,6 +217,8 @@ const buddyActions={buddyConfirmPublish:publishBuddy,buddyCancelPreview:()=>$('b
   buddyRate:openRating,buddyBlock:blockBuddy,buddyCloseRating:()=>$('buddyRatingDialog').close(),loadBlocks:()=>busy($('loadBlocks'),loadBlocks,'buddyBlocksMsg')};
 for(const [id,fn] of Object.entries(buddyActions))$(id).addEventListener('click',fn);
 $('buddyMapDialog').addEventListener('close',closePointPicker);
+$('buddyChatMenu').addEventListener('click',event=>{if(event.target.closest('button'))$('buddyChatMenu').open=false;});
+document.addEventListener('click',event=>{if(!$('buddyChatMenu').contains(event.target))$('buddyChatMenu').open=false;});
 $('buddyOtherSport').addEventListener('click',()=>{$('buddyCustomFilter').classList.remove('hidden');$('buddyFilterApply').classList.remove('hidden');$('buddyFilter').focus();});
 for(const id of ['buddyTimeFilter','buddySort','buddyScope','buddyLevelFilter'])$(id).addEventListener('change',()=>{if(!$('buddyFilterDialog').open)loadBuddyStatuses().catch(e=>$('buddyListMsg').textContent=e.message);});
 $('page-buddies').addEventListener('click',e=>{

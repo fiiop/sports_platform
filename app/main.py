@@ -21,7 +21,7 @@ from .services.ai_advice import generate_ai_advice
 from .services.map_tiles import get_tile
 from .services.migrations import allow_place_only_statuses
 from .services.push import router as push_router
-from .services.campus import router as campus_router, migrate_legacy, writable, lock_user, school
+from .services.campus import router as campus_router, migrate_legacy, writable, lock_user, school, chat_identities
 from .models import Activity, Meetup, MeetupMember, UserNotice
 from .services.reminders import start_worker, deliver_pending
 from .services.media import router as media_router
@@ -29,7 +29,7 @@ from .services.media import router as media_router
 Base.metadata.create_all(bind=engine)
 allow_place_only_statuses(engine)
 migrate_legacy(engine)
-app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="4.1.0")
+app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="4.2.0")
 app.include_router(push_router)
 app.include_router(campus_router)
 app.include_router(media_router)
@@ -48,7 +48,7 @@ def stop_reminders():
 APP_DIR = Path(__file__).resolve().parent
 ASSET_VERSION = hashlib.sha256(b"".join(
     (APP_DIR / "static" / name).read_bytes()
-    for name in ("app.js", "buddies.js", "notifications.js", "campus.js", "identity.js", "discovery.js", "style.css", "identity.css", "discovery.css", "sw.js")
+    for name in ("app.js", "buddies.js", "notifications.js", "campus.js", "identity.js", "discovery.js", "style.css", "identity.css", "discovery.css", "messages.css", "sw.js")
 )).hexdigest()[:16]
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
@@ -498,11 +498,13 @@ def list_buddy_chats(request: Request, db: Session = Depends(get_db), offset: in
                        .where(or_(BuddyChat.user_a == user.id, BuddyChat.user_b == user.id))
                        .order_by(func.coalesce(last_ids.c.last_id, 0).desc(), BuddyChat.id.desc())
                        .offset(offset).limit(100)).all()
+    peer_ids = [chat.user_b if chat.user_a == user.id else chat.user_a for chat, _, _ in chats]
+    identities = chat_identities(db, peer_ids, user.id)
     results = []
     for chat, last, unread_count in chats:
-        other = db.get(User, chat.user_b if chat.user_a == user.id else chat.user_a)
-        results.append({"id": chat.id, "username": other.username, "topic": chat.topic,
-                        "user_id": other.id, "blocked": is_blocked(user.id, other.id, db),
+        other_id = chat.user_b if chat.user_a == user.id else chat.user_a
+        results.append({"id": chat.id, **identities[other_id], "topic": chat.topic,
+                        "user_id": other_id, "blocked": is_blocked(user.id, other_id, db),
                         "last_message": last.body if last else "还没有消息，打个招呼吧",
                         "last_id": last.id if last else 0,
                         "last_at": last.created_at.isoformat() + "Z" if last else None,
@@ -576,7 +578,8 @@ def buddy_messages(chat_id: int, request: Request, db: Session = Depends(get_db)
     rows = list(db.scalars(query))
     if reverse:
         rows.reverse()
-    return [{"id": row.id, "sender_id": row.sender_id, "body": row.body,
+    identities = chat_identities(db, (row.sender_id for row in rows), user.id)
+    return [{"id": row.id, "sender_id": row.sender_id, **identities[row.sender_id], "body": row.body,
              "created_at": row.created_at.isoformat() + "Z"} for row in rows]
 
 

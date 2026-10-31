@@ -31,8 +31,10 @@ async function themes(){
 
 async function identity(){
   const requests=[],nodes=new Map(),state={epoch:1,user:{username:'student'}};
-  const element=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',classList:{toggle(){}},removeAttribute(){}});return nodes.get(id);};
-  const context=vm.createContext({state,$:element,
+  const element=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',classList:{toggle(){},add(){},remove(){}},getAttribute(){return this.src;},removeAttribute(){}});return nodes.get(id);};
+  const context=vm.createContext({state,$:element,AbortController,setTimeout,clearTimeout,
+    URL:{createObjectURL:()=>`blob:test-${Math.random()}`,revokeObjectURL(){}},Image:class{decode(){return Promise.resolve();}},
+    fetch:async()=>({ok:true,headers:{get:()=> 'image/jpeg'},blob:async()=>({size:10})}),
     api:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))});
   vm.runInContext("let profileQueue=Promise.resolve();const campus={profile:null};let ready;campus.profileReady=new Promise(resolve=>ready=resolve)",context);
   const source=fs.readFileSync('app/static/identity.js','utf8');

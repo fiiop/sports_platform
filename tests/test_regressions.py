@@ -21,7 +21,7 @@ class RegressionTests(unittest.TestCase):
         page = self.client.get("/")
         self.assertEqual(page.headers["cache-control"], "no-store")
         for name in ("app.js", "buddies.js", "campus.js", "notifications.js", "identity.js",
-                     "discovery.js", "style.css", "identity.css", "discovery.css"):
+                     "discovery.js", "style.css", "identity.css", "discovery.css", "messages.css"):
             url = f"/static/{name}?v={ASSET_VERSION}"
             self.assertIn(url, page.text)
             self.assertEqual(self.client.get(url).status_code, 200)
