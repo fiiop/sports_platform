@@ -2,7 +2,7 @@
 
 面向校园日常运动的手机优先 Web 应用：发现同校搭子 → 聊天确认运动 → 赴约与反馈 → 记录、计划和复盘。后端使用 FastAPI、SQLAlchemy，前端使用原生 HTML/CSS/JavaScript，支持 SQLite、PostgreSQL 和可安装 PWA。
 
-## 4.2 功能与规则
+## 4.2.1 功能与规则
 
 ### 手机界面与发现搭子
 
@@ -52,6 +52,7 @@
 - 图片存入当前数据库，随完整数据库备份保留；不依赖 Render 的临时文件目录。当前实现面向校园小规模试用，更大规模应迁移到受访问控制的对象存储。
 - 图片仅登录后可访问，遵守双方拉黑、账号社交限制与活动可见性规则，不进入离线缓存。昵称和简介自愿填写，不代表身份或学籍认证。
 - 更换头像时先保留本地预览，确认服务器图片读取并解码成功后再替换；短暂读取失败自动重试一次，持续失败时明确提示并提供“重新加载头像”，不会再次上传。退出或切换账号会清除预览并取消旧图片请求。
+- 消息列表、私聊/群聊和活动卡片共用头像恢复逻辑：读取失败保留图片入口并有限重试；网络恢复、回到页面或切页时可再次加载。当前账号已验证的头像只在页面内复用，退出后清除，不写入本地持久缓存。
 
 ## 正确打开与本地运行
 
@@ -111,6 +112,7 @@ node tests/campus_frontend.cjs
 .\.venv\Scripts\python.exe tests/browser_smoke.py
 .\.venv\Scripts\python.exe tests/browser_campus_visual.py
 .\.venv\Scripts\python.exe tests/browser_avatar.py
+.\.venv\Scripts\python.exe tests/browser_avatar_recovery.py
 .\.venv\Scripts\python.exe tests/browser_chat_visual.py
 ```
 

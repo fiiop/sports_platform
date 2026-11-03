@@ -37,6 +37,7 @@ function navigate(route, fromHistory=false){
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==`page-${page}`));
   document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===navPage);if(b.dataset.page===navPage)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   if(typeof buddyNavigate==='function') buddyNavigate(page,parts.join('/'));
+  if(typeof retryAvatarPhotos==='function')retryAvatarPhotos();
   if(page==='profile'&&typeof refreshCampusStats==='function')refreshCampusStats().catch(e=>{$('profileMsg').textContent=e.message;});
   if(page==='home'&&state.user&&typeof loadHomeActivities==='function'){
     loadHomeActivities().catch(e=>{$('homeDiscoveryMsg').textContent=e.message;});

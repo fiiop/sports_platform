@@ -4,8 +4,8 @@ const buddyCover={file:null,objectURL:null,url:null,remove:false};
 const filterFields=['buddyTimeFilter','buddyPeriodFilter','buddyScope','buddySort','buddyLevelFilter','buddyPlaceFilter'];
 function safeActivityImage(url){return typeof url==='string'&&/^\/api\/(users|activities)\/\d+\/(avatar|cover)(\?v=[\w-]+)?$/.test(url)?url:'';}
 function activityAvatar(person,extra=''){
-  const name=person.display_name||person.username||'同学',url=safeActivityImage(person.avatar_url);
-  return `<span class="activity-avatar ${extra}" title="${escapeHTML(name)}">${url?`<img src="${escapeHTML(url)}" alt="${escapeHTML(name)}的头像" loading="lazy">`:`<span>${escapeHTML(Array.from(name)[0]||'同')}</span>`}</span>`;
+  const name=person.display_name||person.username||'同学';
+  return `<span class="activity-avatar ${extra}" title="${escapeHTML(name)}"><span aria-hidden="true">${escapeHTML(Array.from(name)[0]||'同')}</span>${avatarPhotoMarkup(person)}</span>`;
 }
 function activityArtwork(sport){
   if(/篮球/.test(sport))return '<svg viewBox="0 0 420 150" aria-hidden="true"><path class="court-line" d="M24 18h372v114H24zm186 0v114M24 52h62v46H24m372-46h-62v46h62"/><circle class="sport-ball" cx="276" cy="75" r="53"/><path class="ball-line" d="M223 75h106M276 22v106m-40-87q75 33 80 67m0-66q-75 34-80 67"/><path class="motion-line" d="M138 60h52m-69 20h63m-38 20h36"/></svg>';
@@ -68,4 +68,4 @@ $('homeDiscovery').addEventListener('click',event=>{
   if('homeSport' in b.dataset){$('buddyFilter').value=b.dataset.homeSport;resetDiscoveryFilters();navigate('buddies');}
   if('homeCreate' in b.dataset){navigate('buddies/mine');newActivity();$('buddySport').value=b.dataset.homeCreate;saveBuddyDraft();}
 });
-document.addEventListener('error',event=>{const image=event.target;if(image.tagName!=='IMG')return;const cover=image.closest('.activity-cover');if(cover){cover.classList.remove('has-photo');cover.classList.add('illustrated');image.replaceWith(document.createRange().createContextualFragment(activityArtwork(cover.closest('article')?.querySelector('h3')?.textContent||'')));const label=cover.querySelector('.activity-cover-label');if(label)label.textContent='运动主题图';}else if(image.closest('.activity-avatar')){image.replaceWith(document.createTextNode(Array.from(image.alt.replace(/的头像$/,''))[0]||'同'));}},true);
+document.addEventListener('error',event=>{const image=event.target;if(image.tagName!=='IMG')return;const cover=image.closest('.activity-cover');if(cover){cover.classList.remove('has-photo');cover.classList.add('illustrated');image.replaceWith(document.createRange().createContextualFragment(activityArtwork(cover.closest('article')?.querySelector('h3')?.textContent||'')));const label=cover.querySelector('.activity-cover-label');if(label)label.textContent='运动主题图';}},true);

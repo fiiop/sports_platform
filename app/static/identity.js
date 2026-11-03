@@ -34,6 +34,7 @@ function loadIdentityImage(source,{force=false,saved=false}={}){
       }
       if(!current()){URL.revokeObjectURL(objectURL);return false;}
       const old=identityState.image;identityState.image=objectURL;identityState.source=source;showIdentityImage(objectURL);
+      if(typeof syncOwnAvatarPhotos==='function')syncOwnAvatarPhotos();
       if(old)URL.revokeObjectURL(old);releaseIdentityImage('preview');
       $('avatarMsg').textContent=saved?'头像已保存，下次登录仍会保留。':avatarHelp;
       $('retryProfileAvatar').classList.add('hidden');return true;
@@ -58,10 +59,12 @@ function renderIdentity(profile,fill=false){
   $('profileAvatarFallback').textContent=Array.from(name)[0]||'动';
   $('removeProfileAvatar').classList.toggle('hidden',!profile.avatar_url);
   if(!identityState.uploading)loadIdentityImage(profile.avatar_url);
-  if(typeof renderMessageSelf==='function')renderMessageSelf();
+  if(typeof syncOwnAvatarPhotos==='function')syncOwnAvatarPhotos();
+  else if(typeof renderMessageSelf==='function')renderMessageSelf();
   if(fill){$('profileNickname').value=profile.nickname||'';$('profileBio').value=profile.bio||'';}
 }
 function resetIdentity(){
+  if(typeof resetAvatarPhotos==='function')resetAvatarPhotos();
   cancelIdentityImage();releaseIdentityImage('preview');releaseIdentityImage('image');
   identityState.source=null;identityState.uploading=false;
   $('identityForm').reset();$('profileAvatarFile').value='';$('profileAvatarFile').disabled=false;
