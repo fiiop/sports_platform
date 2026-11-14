@@ -194,6 +194,13 @@ def reminder_is_current(db, notice, now=None):
     now = now or datetime.utcnow()
     meeting = db.get(Meetup, notice.meetup_id) if notice.meetup_id else None
     member = db.get(MeetupMember, (notice.meetup_id, notice.user_id)) if meeting else None
+    if notice.dedupe_key.startswith("repeat:"):
+        # Repeat invitations use a request key for idempotence, not a reminder schedule.
+        if not (meeting and member and member.status == "pending"
+                and meeting.state in ("pending", "confirmed") and meeting.starts_at > now):
+            return False
+        from .campus import blocked
+        return meeting.owner_id not in set(db.scalars(blocked(notice.user_id)))
     if not meeting or meeting.state != "confirmed" or not member or member.status != "accepted":
         return False
     for minutes in (120, 30):

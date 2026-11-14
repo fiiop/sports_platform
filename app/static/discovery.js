@@ -13,23 +13,22 @@ function activityArtwork(sport){
   return '<svg viewBox="0 0 420 150" aria-hidden="true"><path class="track-line" d="M0 116h160c60 0 60-84 120-84h140M0 135h163c69 0 69-84 124-84h133M0 97h154c53 0 54-84 119-84h147"/><circle class="runner-head" cx="231" cy="35" r="11"/><path class="runner-body" d="m220 57-20 27 28 17-15 30m-13-47-30 26h-30m80-52 24 16 22-14m-46-2-26 3-17 21"/><path class="motion-line" d="M105 50h49m-65 17h57"/></svg>';
 }
 function campusActivityCard(row,home=false){
-  const mine=row.user_id===state.user?.id,group=row.capacity>2,cover=safeActivityImage(row.cover_url),name=row.display_name||row.username;
+  const mine=row.user_id===state.user?.id,group=row.capacity>2,name=row.display_name||row.username;
   const full=group&&row.joined>=row.capacity,remaining=Math.max(0,row.capacity-row.joined);
-  const label=group?(full?'人数已满':`还差 ${remaining} 人`):'找一位同伴';
-  const rating=row.rating==null?'新同伴':`★ ${Number(row.rating).toFixed(1)} · ${row.rating_count} 人评价`;
-  let action=mine?`<button type="button" class="ghost" ${home?'data-home-own':'data-buddy-tab="mine"'}>我的状态</button>`:group?`<button type="button" ${row.is_member?`data-open-meetup="${row.meetup_id}"`:home?`data-home-join="${row.id}"`:`data-join-activity="${row.id}"`} ${full&&!row.is_member?'disabled':''}>${row.is_member?'进入组局':full?'已满员':'一起参加 ↗'}</button>`:`<button type="button" ${home?`data-home-chat="${row.user_id}"`:`data-buddy-user="${row.user_id}"`}>聊一聊 ↗</button>`;
+  const label=group?(full?'人数已满':`还缺 ${remaining} 人`):'找一位同伴';
+  const rating=row.rating==null?'暂无评价':`★ ${Number(row.rating).toFixed(1)} · ${row.rating_count} 人评价`;
   const people=(row.participants||[]).slice(0,3);
-  return `<article class="buddy-status campus-activity" data-activity-card="${row.id}"><div class="activity-cover ${cover?'has-photo':'illustrated'}">${cover?`<img src="${escapeHTML(cover)}" alt="${escapeHTML(row.exercise_type)}活动封面" loading="lazy">`:activityArtwork(row.exercise_type)}<span class="activity-sport">${escapeHTML(row.exercise_type)}</span><span class="activity-cover-label">${cover?'同学上传':'运动主题图'}</span></div><div class="activity-content"><div class="activity-title"><h3>${escapeHTML(row.exercise_type)}${group?'组局':''}</h3><span class="activity-seats ${full?'full':''}">${label}</span></div><p class="activity-when">${escapeHTML(buddyTime(row.starts_at))}<span> · ${row.duration||60} 分钟</span></p><p class="activity-place">⌖ ${escapeHTML(row.location)}</p><div class="activity-host">${activityAvatar(row)}<div><strong>${escapeHTML(name)}${mine?' · 我':''}</strong><span>${escapeHTML(row.school||'湘潭大学')} · ${escapeHTML(row.level||'不限')}水平</span></div><span class="activity-rating">${rating}</span></div>${row.note?`<p class="activity-note">${escapeHTML(row.note)}</p>`:row.bio?`<p class="activity-note">${escapeHTML(row.bio)}</p>`:''}<div class="activity-bottom"><div class="activity-people">${group&&people.length?`<span class="participant-faces">${people.map(p=>activityAvatar(p,'participant-avatar')).join('')}</span>`:''}<span>${group?`${row.joined}/${row.capacity} 人已加入`:`完成 ${row.completed||0} 次约定`}</span></div>${action}</div>${!home&&!mine?`<button type="button" class="text-button report-status" data-report-activity="${row.id}" aria-label="举报 ${escapeHTML(name)} 的状态">举报</button>`:''}</div></article>`;
+  return `<article class="buddy-status campus-activity ${home?'home-pick':''}" data-activity-card="${row.id}">${activityCoverMarkup(row)}<div class="activity-content"><div class="activity-title"><h3>${escapeHTML(row.exercise_type)}${group?'组局':''}</h3><span class="activity-seats ${full?'full':''}">${label}</span></div><p class="activity-when" title="${escapeHTML(buddyTime(row.starts_at))}">${escapeHTML(activityWhen(row.starts_at))}<span> · ${row.duration||60} 分钟</span></p><p class="activity-place">⌖ ${escapeHTML(row.location)}</p><div class="activity-tags"><span>${escapeHTML(row.level==='不限'?'不限水平':`${row.level}水平`)}</span>${row.school===campus.profile?.school?'<span>同校</span>':''}</div><div class="activity-host">${activityAvatar(row)}<div><strong>${escapeHTML(name)}${mine?' · 我':''}</strong><span>${rating}</span></div>${group?`<span class="participant-faces">${people.slice(1).map(p=>activityAvatar(p,'participant-avatar')).join('')}</span>`:''}<button type="button" data-activity-details="${row.id}">查看详情 ↗</button></div></div></article>`;
 }
 async function loadHomeActivities(){
   if(!state.user)return;const epoch=state.epoch,request=++discovery.request;
   $('homeDiscoveryMsg').textContent='正在看看校园里的运动邀请…';$('homeActivityList').setAttribute('aria-busy','true');
   try{
-    const rows=await api('/api/activities?scope=school&sort=rating&limit=6');
+    const rows=await api('/api/activities?scope=school&sort=time&limit=3');
     if(epoch!==state.epoch||request!==discovery.request)return;
     discovery.rows=rows;$('homeCampusLabel').textContent=`${campus.profile?.school||rows[0]?.school||'我的校园'} · 一起运动`;
     $('homeActivityList').innerHTML=rows.map(row=>campusActivityCard(row,true)).join('')||'<div class="campus-empty"><div class="campus-empty-art activity-cover illustrated">'+activityArtwork('羽毛球')+'</div><h3>第一场，从你开始</h3><p>还没有同校活动。发出邀请，约同学一起动一动。</p><button type="button" data-home-create="羽毛球">发起一场羽毛球局 ↗</button><button type="button" class="text-button" data-home-own>选择其他运动</button></div>';
-    $('homeDiscoveryMsg').textContent=rows.length?'真实同校活动 · 时间与场地由发起人填写':'';
+    $('homeDiscoveryMsg').textContent='';
   }catch(e){if(epoch===state.epoch&&request===discovery.request)$('homeDiscoveryMsg').textContent=e.message;}
   finally{if(request===discovery.request)$('homeActivityList').removeAttribute('aria-busy');}
 }

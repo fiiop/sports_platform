@@ -33,29 +33,43 @@
     <div class="filter-sheet-footer"><button type="button" id="resetBuddyFilters" class="ghost">重置条件</button><button type="button" id="applyBuddyFilters">查看匹配活动</button></div>
   </dialog>
 
-  <section id="buddyMinePanel" class="card hidden">
-    <div id="buddyOwnStatus" class="buddy-state-card"></div>
-    <div class="section-head"><h2 id="buddyFormTitle">发布运动状态</h2><button type="button" id="buddyRemove" class="text-button hidden">撤下状态</button></div>
-    <p class="fine">最多发布三条未开始的状态。人数超过 2 人时创建多人组局，加入后可群聊。</p>
+  <section id="buddyMinePanel" class="card publish-panel hidden">
+    <div class="publish-heading"><div><span class="eyebrow">把下一场运动约起来</span><h2 id="buddyFormTitle">发起一场运动</h2><p class="muted">选好项目、时间和地点，就可以邀请同学。</p></div><button type="button" id="buddyRemove" class="text-button hidden">撤下状态</button></div>
     <form id="buddyForm">
-      <div class="cover-editor"><div class="section-head"><label for="buddyCoverFile">给这次运动一张封面 <span class="fine">选填</span></label><button type="button" id="buddyCoverRemove" class="text-button hidden">移除图片</button></div><label class="cover-upload-zone" for="buddyCoverFile"><img id="buddyCoverPreview" class="hidden" alt="活动封面预览"><span id="buddyCoverPlaceholder"><b>＋ 添加场地或运动照片</b><small>让同伴更容易找到你们的集合点</small></span></label><input id="buddyCoverFile" type="file" accept="image/jpeg,image/png,image/webp" aria-label="选择活动封面"><p id="buddyCoverMsg" class="fine" role="status">JPEG、PNG 或 WebP，最多 5 MB；未选择照片时显示运动主题图。</p></div>
-      <div class="form-grid">
-        <label>想做什么运动<input id="buddySport" list="exerciseOptions" maxlength="50" value="羽毛球" required></label>
-        <label>什么时候<input id="buddyTime" type="datetime-local" required></label>
-        <label>预计时长<select id="buddyDuration"><option value="30">30 分钟</option><option value="60" selected>1 小时</option><option value="90">1.5 小时</option><option value="120">2 小时</option><option value="180">3 小时</option></select></label>
+      <section class="publish-step" aria-labelledby="publishSportTitle">
+        <div class="publish-step-heading"><span aria-hidden="true">01</span><label id="publishSportTitle" for="buddySport">想玩什么</label></div>
+        <input id="buddySport" list="exerciseOptions" maxlength="50" value="羽毛球" required placeholder="输入运动项目，也可以直接选">
+        <div class="buddy-quick-picks publish-quick" aria-label="常用运动"><button type="button" class="ghost" data-buddy-sport="羽毛球">羽毛球</button><button type="button" class="ghost" data-buddy-sport="跑步">跑步</button><button type="button" class="ghost" data-buddy-sport="篮球">篮球</button><button type="button" class="ghost" data-buddy-sport="乒乓球">乒乓球</button></div>
+      </section>
+      <section class="publish-step" aria-labelledby="publishTimeTitle">
+        <div class="publish-step-heading"><span aria-hidden="true">02</span><label id="publishTimeTitle" for="buddyTime">什么时候出发</label></div>
+        <div class="buddy-quick-picks publish-quick" aria-label="快捷日期"><button type="button" class="ghost" data-buddy-day="0">今天</button><button type="button" class="ghost" data-buddy-day="1">明天</button><button type="button" class="ghost" data-buddy-day="weekend">本周末</button></div>
+        <input id="buddyTime" type="datetime-local" required>
+      </section>
+      <section class="publish-step" aria-labelledby="publishPlaceTitle">
+        <div class="publish-step-heading"><span aria-hidden="true">03</span><label id="publishPlaceTitle" for="buddyPlace">在哪里碰面</label><button type="button" id="buddyReusePlace" class="text-button hidden">沿用上次</button></div>
+        <input id="buddyPlace" maxlength="200" placeholder="例如：学校体育馆 2 号羽毛球场" required>
+        <p id="buddyReuseHint" class="fine hidden"></p>
+        <div class="buddy-quick-picks publish-quick" aria-label="常用场地名称"><button type="button" class="ghost" data-buddy-place="学校体育馆">体育馆</button><button type="button" class="ghost" data-buddy-place="学校田径场">田径场</button><button type="button" class="ghost" data-buddy-place="学校篮球场">篮球场</button></div>
+        <p class="fine publish-place-help">补充场地编号或集合点，同伴更容易找到你。</p>
+      </section>
+      <div class="form-grid publish-basics">
+        <label>一起运动多久<select id="buddyDuration"><option value="30">30 分钟</option><option value="60" selected>1 小时</option><option value="90">1.5 小时</option><option value="120">2 小时</option><option value="180">3 小时</option></select></label>
         <label>总人数（含自己）<input id="buddyCapacity" type="number" min="2" max="20" value="2" required inputmode="numeric"></label>
-        <label>期待的运动水平<select id="buddyLevel"><option>不限</option><option>新手</option><option>有基础</option><option>熟练</option></select></label>
       </div>
-      <div class="buddy-quick-picks" aria-label="常用运动"><button type="button" class="ghost" data-buddy-sport="羽毛球">羽毛球</button><button type="button" class="ghost" data-buddy-sport="跑步">跑步</button><button type="button" class="ghost" data-buddy-sport="篮球">篮球</button><button type="button" class="ghost" data-buddy-sport="乒乓球">乒乓球</button></div>
-      <div class="buddy-quick-picks" aria-label="快捷日期"><span class="fine">快捷日期</span><button type="button" class="ghost" data-buddy-day="0">今天</button><button type="button" class="ghost" data-buddy-day="1">明天</button><button type="button" class="ghost" data-buddy-day="weekend">本周末</button></div>
-      <label>约在哪里<input id="buddyPlace" maxlength="200" placeholder="例如：学校体育馆 2 号羽毛球场" required></label>
-      <div class="buddy-quick-picks" aria-label="常用场地名称"><span class="fine">场地参考</span><button type="button" class="ghost" data-buddy-place="学校体育馆">学校体育馆</button><button type="button" class="ghost" data-buddy-place="学校田径场">学校田径场</button><button type="button" class="ghost" data-buddy-place="学校篮球场">学校篮球场</button></div>
-      <p class="fine">请补充你所在的学校和具体场地，方便搭子确认。</p>
-      <div class="actions"><button type="button" id="buddyPickPoint" class="ghost">添加地图位置（可选）</button><button type="button" id="buddyClearPoint" class="text-button hidden">移除地图位置</button><span id="buddyPoint" class="fine">未添加地图位置，可直接填写场地发布。</span></div>
-      <details id="buddyMoreDetails"><summary>补充说明（可选）</summary><label>想说的话<textarea id="buddyNote" maxlength="1000" rows="2" placeholder="例如：新手友好，自备球拍，欢迎一起练习。"></textarea></label></details>
-      <p id="buddyDraftMsg" class="fine" role="status"></p>
-      <div class="actions"><button id="buddyPublish" type="submit">预览并发布</button><button type="button" id="buddyNewStatus" class="ghost">新建状态</button><button type="button" id="buddyDiscardDraft" class="text-button hidden">放弃草稿</button></div><p id="buddyFormMsg" class="msg" role="status"></p>
+      <details id="buddyMoreDetails" class="publish-extra">
+        <summary><span>照片与补充信息<small>选填 · 让同伴更了解这次运动</small></span><span aria-hidden="true">＋</span></summary>
+        <div class="publish-extra-content">
+          <div class="cover-editor"><div class="section-head"><label for="buddyCoverFile">场地或运动照片</label><button type="button" id="buddyCoverRemove" class="text-button hidden">移除图片</button></div><label class="cover-upload-zone" for="buddyCoverFile"><img id="buddyCoverPreview" class="hidden" alt="活动封面预览"><span id="buddyCoverPlaceholder"><b>＋ 添加一张照片</b><small>不上传也可以发布，会展示运动插画</small></span></label><input id="buddyCoverFile" type="file" accept="image/jpeg,image/png,image/webp" aria-label="选择活动封面"><p id="buddyCoverMsg" class="fine" role="status">JPEG、PNG 或 WebP，最多 5 MB；未选择照片时显示运动主题图。</p></div>
+          <label>期待的运动水平<select id="buddyLevel"><option>不限</option><option>新手</option><option>有基础</option><option>熟练</option></select></label>
+          <label>给同伴的补充说明<textarea id="buddyNote" maxlength="1000" rows="3" placeholder="例如：新手友好，请自带球拍。若有场地费用，请说明金额和分摊方式。"></textarea></label>
+          <div class="actions publish-location-tools"><button type="button" id="buddyPickPoint" class="ghost">添加地图位置</button><button type="button" id="buddyClearPoint" class="text-button hidden">移除地图位置</button></div><p id="buddyPoint" class="fine">未添加地图位置，可直接填写场地发布。</p>
+        </div>
+      </details>
+      <div class="publish-submit-bar"><div><strong id="buddyPublishSummary">准备好，就邀请同学一起</strong><p id="buddyDraftMsg" class="fine" role="status"></p></div><button id="buddyPublish" type="submit">预览邀请 <span aria-hidden="true">↗</span></button></div>
+      <div class="publish-form-foot"><span class="fine">预览确认后才会公开。</span><button type="button" id="buddyDiscardDraft" class="text-button hidden">放弃草稿</button></div><p id="buddyFormMsg" class="msg" role="status"></p>
     </form>
+    <section id="buddyPublishedPanel" class="published-panel"><div class="section-head"><div><h3>我发起的运动 <span id="buddyPublishedCount" class="pill">0</span></h3><p class="fine">最多保留三条尚未开始的邀请。</p></div><button type="button" id="buddyNewStatus" class="text-button">新建邀请 ＋</button></div><div id="buddyOwnStatus" class="buddy-state-card"></div></section>
   </section>
 
   <section id="buddyMessagesPanel" class="card hidden">

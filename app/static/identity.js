@@ -61,6 +61,7 @@ function renderIdentity(profile,fill=false){
   if(!identityState.uploading)loadIdentityImage(profile.avatar_url);
   if(typeof syncOwnAvatarPhotos==='function')syncOwnAvatarPhotos();
   else if(typeof renderMessageSelf==='function')renderMessageSelf();
+  if(typeof renderProfileOverview==='function')renderProfileOverview();
   if(fill){$('profileNickname').value=profile.nickname||'';$('profileBio').value=profile.bio||'';}
 }
 function resetIdentity(){

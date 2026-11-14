@@ -155,7 +155,9 @@ def main():
                     decoded(page, "#profileAvatarPreview")
                     policy[owner_id] = "fail"
                     requests[owner_id] = 0
+                    page.locator('[data-profile-open="identityEditDialog"]').click()
                     page.locator("#profileAvatarFile").set_input_files(str(images[2]))
+                    page.evaluate("document.querySelector('#identityEditDialog').close()")
                     expect(page.locator("#avatarMsg")).to_contain_text("头像已保存")
                     wait_until(page, lambda: requests.get(owner_id, 0) >= 2)
                     expect(page.locator("#profileAvatarFile")).to_be_enabled(timeout=25000)
@@ -195,8 +197,10 @@ def main():
                     old_owner = owner.request.get(BASE + saved).body()
                     reload_route("profile")
                     wait_until(page, lambda: bool(held))
+                    page.locator('[data-profile-open="identityEditDialog"]').click()
                     page.locator("#removeProfileAvatar").click()
                     page.wait_for_function("campus.profile && !campus.profile.avatar_url")
+                    page.evaluate("document.querySelector('#identityEditDialog').close()")
                     for route in held:
                         try:
                             route.fulfill(status=200, content_type="image/jpeg", body=old_owner)

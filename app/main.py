@@ -25,14 +25,16 @@ from .services.campus import router as campus_router, migrate_legacy, writable, 
 from .models import Activity, Meetup, MeetupMember, UserNotice
 from .services.reminders import start_worker, deliver_pending
 from .services.media import router as media_router
+from .services.activity_details import router as activity_details_router
 
 Base.metadata.create_all(bind=engine)
 allow_place_only_statuses(engine)
 migrate_legacy(engine)
-app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="4.2.1")
+app = FastAPI(title="循动 · 运动搭子与运动管理平台", version="4.3.0")
 app.include_router(push_router)
 app.include_router(campus_router)
 app.include_router(media_router)
+app.include_router(activity_details_router)
 
 @app.on_event("startup")
 def start_reminders():
@@ -48,7 +50,7 @@ def stop_reminders():
 APP_DIR = Path(__file__).resolve().parent
 ASSET_VERSION = hashlib.sha256(b"".join(
     (APP_DIR / "static" / name).read_bytes()
-    for name in ("app.js", "buddies.js", "notifications.js", "campus.js", "identity.js", "avatars.js", "discovery.js", "style.css", "identity.css", "discovery.css", "messages.css", "sw.js")
+    for name in ("app.js", "buddies.js", "notifications.js", "campus.js", "identity.js", "avatars.js", "discovery.js", "experience.js", "profile.js", "style.css", "identity.css", "discovery.css", "messages.css", "experience.css", "profile.css", "publishing.css", "sw.js")
 )).hexdigest()[:16]
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))

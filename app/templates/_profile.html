@@ -1,0 +1,10 @@
+<section class="page hidden" id="page-profile">
+  <div class="profile-page-heading"><div><p class="eyebrow">让喜欢的运动，成为日常</p><h1>我的运动主页</h1></div><button type="button" class="profile-settings-button" data-profile-open="profileSettingsDialog" aria-label="个人设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+  {% include '_identity.html' %}
+  <section class="profile-progress" aria-label="我的运动积累"><div class="section-head"><h2>一点点，积累起来</h2><span class="pill">近 7 天</span></div><div class="profile-metrics"><div><strong id="profileWeekMinutes">0</strong><span>运动分钟</span></div><div><strong id="profileWeekDays">0</strong><span>运动天数</span></div><div><strong id="profileCompleted">0</strong><span>累计完成约定</span></div></div><p id="profilePeriod" class="fine">记录一次运动，从今天开始。</p></section>
+  <nav class="profile-quick-links" aria-label="我的运动功能"><button type="button" data-go="buddies/appointments"><span aria-hidden="true">↗</span><strong>我的约定</strong><small>看看下一场</small></button><button type="button" data-go="plans"><span aria-hidden="true">✓</span><strong>运动计划</strong><small>按自己的节奏</small></button><button type="button" data-go="records"><span aria-hidden="true">＋</span><strong>记一笔</strong><small>留住今天的运动</small></button></nav>
+  <section class="profile-section"><div class="section-head"><h2>最近常玩的项目</h2></div><p id="profileSportsScope" class="fine">根据已加载的运动记录整理</p><div id="profileSports" class="profile-sports"><p class="fine">记录运动后，这里会出现你常玩的项目。</p></div></section>
+  <section class="profile-section"><div class="section-head"><h2>我的运动足迹</h2><button type="button" class="text-button" data-go="records">全部记录 ›</button></div><div id="profileRecentRecords"><div class="profile-record-empty"><p>你的下一次出发，值得被记住。</p><button type="button" class="ghost" data-go="records">记录第一次运动</button></div></div></section>
+  <button type="button" class="profile-invite-link" data-go="buddies"><span><strong>下一场，找个同伴</strong><small>看看同校同学最近在玩什么</small></span><span aria-hidden="true">↗</span></button>
+  {% include '_profile_features.html' %}
+</section>

@@ -31,6 +31,7 @@ function navigate(route, fromHistory=false){
   if(page==='messages'){page='buddies';parts=['messages',...parts];}
   const navPage=page==='buddies'&&['messages','group','appointments'].includes(parts[0])?'messages':page;
   if(!['home','records','plans','buddies','profile'].includes(page)) return;
+  if(typeof closeProfileDialogs==='function')closeProfileDialogs();
   if(currentRoute)routeScroll.set(currentRoute,window.scrollY);
   if(!fromHistory && location.hash!==`#${route}`)history.pushState(null,'',`#${route}`);
   currentRoute=route;
@@ -38,6 +39,7 @@ function navigate(route, fromHistory=false){
   document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===navPage);if(b.dataset.page===navPage)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   if(typeof buddyNavigate==='function') buddyNavigate(page,parts.join('/'));
   if(typeof retryAvatarPhotos==='function')retryAvatarPhotos();
+  if(page==='profile'&&typeof renderProfileOverview==='function')renderProfileOverview();
   if(page==='profile'&&typeof refreshCampusStats==='function')refreshCampusStats().catch(e=>{$('profileMsg').textContent=e.message;});
   if(page==='home'&&state.user&&typeof loadHomeActivities==='function'){
     loadHomeActivities().catch(e=>{$('homeDiscoveryMsg').textContent=e.message;});
@@ -47,6 +49,9 @@ function navigate(route, fromHistory=false){
   window.scrollTo({top:fromHistory?(routeScroll.get(route)||0):0,behavior:'instant'});
 }
 function showAuth(){
+  document.body.classList.remove('signed-in');
+  if(typeof resetProfileOverview==='function')resetProfileOverview();
+  if(typeof resetExperience==='function')resetExperience();
   if(typeof resetIdentity==='function')resetIdentity();
   if(typeof resetDiscovery==='function')resetDiscovery();
   if(typeof resetBuddies==='function') resetBuddies();
@@ -66,6 +71,7 @@ function showAuth(){
 }
 async function check(){const user=await api('/api/me');if(user.logged_in) await showApp(user);else showAuth();}
 async function showApp(user){
+  document.body.classList.add('signed-in');
   state.user=user;state.epoch++;
   $('authPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');
   $('userArea').textContent=user.username;$('greetingName').textContent=user.username;
@@ -113,6 +119,7 @@ async function delRecord(id){if(!confirm('删除这条训练记录？删除后�
 function renderRecords(){
   $('records').innerHTML=state.records.map(r=>`<article class="record-item"><div class="record-main"><div><h3>${escapeHTML(r.exercise_type)} <span class="pill">${r.duration} 分钟</span></h3><span class="record-date">${escapeHTML(r.exercise_date)}</span></div><div class="record-actions"><button type="button" class="ghost" data-edit-record="${r.id}">编辑</button><button type="button" class="text-button" data-delete-record="${r.id}">删除</button></div></div><p class="record-detail">${r.distance ? `${r.distance} km · ` : ''}强度 ${r.intensity}/5 · ${escapeHTML(r.feeling)}</p>${r.note?`<p class="record-detail">${escapeHTML(r.note)}</p>`:''}</article>`).join('')||'<div class="empty"><b>第一条记录，从今天开始</b>填好上面的训练日记，把这一次努力留住。</div>';
   $('loadMore').classList.toggle('hidden',!state.more);
+  if(typeof renderProfileOverview==='function')renderProfileOverview();
 }
 async function loadRecords(append=false){const epoch=state.epoch;const rows=await api(`/api/records?offset=${append?state.records.length:0}&limit=20`);if(epoch!==state.epoch)return;state.records=append?[...state.records,...rows]:rows;state.more=rows.length===20;renderRecords();}
 function editPlan(id){const p=state.plans.find(p=>p.id===id);if(!p)return;state.planId=id;$('planTitle').value=p.title;$('planTarget').value=p.target;$('weeklyMinutes').value=p.weekly_minutes;$('planStart').value=p.start_date;$('planEnd').value=p.end_date;$('planFormTitle').textContent='调整运动计划';$('planSubmit').textContent='保存修改';$('cancelPlan').classList.remove('hidden');navigate('plans');$('planForm').scrollIntoView({block:'start'});}
@@ -133,7 +140,7 @@ async function refresh(){
     $('progressBar').style.width=Math.min(d.review.completion,100)+'%';$('completionLabel').textContent=`${d.review.plan_id?d.review.plan_title:'默认参考目标（可在计划页设置）'} · 完成 ${d.review.completion}%`;
     $('comparison').textContent=`比前 7 天${d.review.delta_minutes>=0?'多':'少'} ${Math.abs(d.review.delta_minutes)} 分钟 · 运动 ${d.review.active_days} 天`;
     $('reviewPeriod').textContent=`统计区间 ${d.review.period_start} ～ ${d.review.period_end}；对比紧邻的前 7 天。`;
-    renderChart(d.chart);await Promise.all([loadPlans(),loadRecords()]);
+    renderChart(d.chart);await Promise.all([loadPlans(),loadRecords()]);if(typeof renderExperience==='function')renderExperience();
   }catch(e){notify(e.message);}
 }
 async function loadReflection(){const epoch=state.epoch;try{const r=await api('/api/reflection');if(epoch!==state.epoch)return;reflectionWeek=r.week_start;if(!reflectionDirty){$('reflection').value=r.reflection;$('nextAction').value=r.next_action;}$('reflectionMsg').textContent=`当前周笔记：${r.week_start} 起，每周一开始新笔记。`;}catch(e){notify(e.message);}}

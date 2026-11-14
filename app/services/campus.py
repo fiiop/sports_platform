@@ -338,7 +338,8 @@ def notify_members(db, meeting, title, body="", exclude=None):
 
 def retire_reminders(db, meeting_id, user_id=None):
     # Keep the history, but stop obsolete alarms from showing as unread or being retried.
-    query = update(UserNotice).where(UserNotice.meetup_id == meeting_id, UserNotice.dedupe_key.is_not(None))
+    query = update(UserNotice).where(UserNotice.meetup_id == meeting_id, UserNotice.dedupe_key.is_not(None),
+                                     ~UserNotice.dedupe_key.startswith("repeat:"))
     if user_id is not None:
         query = query.where(UserNotice.user_id == user_id)
     db.execute(query.values(is_read=1, push_done=1))
@@ -455,6 +456,76 @@ def get_meeting(meeting_id: int, request: Request, db: Session = Depends(get_db)
     return meeting_dict(db, meeting, user.id)
 
 
+class RepeatIn(BaseModel):
+    starts_at: datetime
+    duration: int = Field(60, ge=15, le=360)
+    location: str = Field(min_length=1, max_length=200)
+    request_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    allow_conflict: bool = False
+    validate_time = field_validator("starts_at")(InviteIn.future.__func__)
+    validate_place = field_validator("location")(InviteIn.not_blank.__func__)
+
+
+@router.post("/api/meetups/{meeting_id}/repeat")
+def repeat_meeting(meeting_id: int, payload: RepeatIn, request: Request, db: Session = Depends(get_db)):
+    """Invite the actual participants again, without changing or copying attendance."""
+    user = auth(request, db)
+    writable(db, user)
+    lock_user(db, user.id)
+    original, member = meeting_for(db, meeting_id, user.id, lock=True)
+    if (original.state != "completed" or member.status != "accepted" or not member.attended
+            or original.starts_at + timedelta(minutes=original.duration) > datetime.utcnow()):
+        raise HTTPException(409, "完成约定并确认参加后，才能邀请原同伴再约一场")
+    people = [m for m in members_for(db, original.id) if m.status == "accepted" and m.attended]
+    if len(people) < 2:
+        raise HTTPException(409, "这次约定没有可再次邀请的同伴")
+    key = f"repeat:{user.id}:{original.id}:{payload.request_id}"
+    previous = db.scalar(select(UserNotice).where(UserNotice.dedupe_key == key))
+    if previous:
+        existing = db.get(Meetup, previous.meetup_id)
+        if (existing.starts_at, existing.duration, existing.location) != (payload.starts_at, payload.duration, payload.location):
+            raise HTTPException(409, "这次邀请已经发送，请查看约定；需要修改时请提出改约")
+        return meeting_dict(db, existing, user.id)
+    # Check all relationships before creating a private group, including recipient pairs.
+    for person in people:
+        writable(db, db.get(User, person.user_id))
+        for other in people:
+            if person.user_id < other.user_id:
+                ensure_pair(db, person.user_id, other.user_id)
+    if original.kind == "pair":
+        chat = db.get(BuddyChat, original.chat_id)
+        if not chat or {m.user_id for m in people} != {chat.user_a, chat.user_b}:
+            raise HTTPException(409, "原聊天不可用，无法再次邀请")
+        db.execute(update(BuddyChat).where(BuddyChat.id == chat.id).values(id=BuddyChat.id))
+        count = db.scalar(select(func.count()).select_from(Meetup).where(
+            Meetup.chat_id == chat.id, Meetup.state == "pending", Meetup.starts_at > datetime.utcnow()))
+    else:
+        pending_groups = select(MeetupMember.meetup_id).where(MeetupMember.status == "pending")
+        count = db.scalar(select(func.count()).select_from(Meetup).where(
+            Meetup.owner_id == user.id, Meetup.kind == "group", Meetup.activity_id.is_(None),
+            Meetup.state.in_(["pending", "confirmed"]), Meetup.starts_at > datetime.utcnow(),
+            Meetup.id.in_(pending_groups)))
+    if count >= 3:
+        raise HTTPException(409, "已有三条待回应邀请，请先处理后再约")
+    conflict_check(db, user.id, payload.starts_at, payload.duration, allow=payload.allow_conflict)
+    meeting = Meetup(owner_id=user.id, kind=original.kind, chat_id=original.chat_id if original.kind == "pair" else None,
+                     exercise_type=original.exercise_type, starts_at=payload.starts_at, duration=payload.duration,
+                     location=payload.location, capacity=len(people), state="pending")
+    db.add(meeting)
+    db.flush()
+    sent_key = False
+    for person in people:
+        mine = person.user_id == user.id
+        db.add(MeetupMember(meetup_id=meeting.id, user_id=person.user_id, status="accepted" if mine else "pending"))
+        if not mine:
+            db.add(UserNotice(user_id=person.user_id, meetup_id=meeting.id, title="同伴邀你再约一场",
+                             body=f"{user.username} 邀你再次一起{meeting.exercise_type}，请确认时间和地点。",
+                             dedupe_key=f"{key}:{person.user_id}" if sent_key else key))
+            sent_key = True
+    db.commit()
+    return meeting_dict(db, meeting, user.id)
+
+
 class DecisionIn(BaseModel):
     action: Literal["accept", "decline", "cancel", "attend", "accept_change", "reject_change"]
     revision: int = Field(ge=1)
@@ -476,17 +547,30 @@ def decision(meeting_id: int, payload: DecisionIn, request: Request, db: Session
         for person in active_members(db, meeting.id):
             ensure_pair(db, user.id, person.user_id)
     if action in ("accept", "decline"):
-        if meeting.state != "pending" or member.status != "pending" or meeting.starts_at <= now:
+        allowed = meeting.state == "pending" or (meeting.kind == "group" and meeting.state == "confirmed")
+        if not allowed or member.status != "pending" or meeting.starts_at <= now:
             raise HTTPException(409, "邀请已处理或已过期")
+        if meeting.proposal:
+            raise HTTPException(409, "组局正在确认改约，请等待新安排确定后回应")
         if action == "accept":
             conflict_check(db, user.id, meeting.starts_at, meeting.duration, meeting.id, payload.allow_conflict)
             member.status, meeting.state = "accepted", "confirmed"
         else:
-            member.status, meeting.state = "declined", "declined"
+            member.status = "declined"
+            if meeting.kind == "pair":
+                meeting.state = "declined"
+            else:
+                remaining = [m for m in members_for(db, meeting.id) if m.user_id != user.id]
+                if len([m for m in remaining if m.status == "accepted"]) < 2 and not any(m.status == "pending" for m in remaining):
+                    meeting.state = "declined"
         notify_members(db, meeting, "运动邀请已接受" if action == "accept" else "运动邀请未接受", exclude=user.id)
     elif action == "cancel":
         if meeting.state not in ("pending", "confirmed") or member.status not in ("pending", "accepted"):
             raise HTTPException(409, "这条约定已结束")
+        if meeting.kind == "group" and member.status == "pending":
+            # Only actual participants may retain chat history after leaving.
+            # A pending invite must never acquire that access by cancelling.
+            raise HTTPException(409, "你尚未加入组局，不参加时请选择暂不参加")
         if not payload.reason.strip():
             raise HTTPException(422, "请说明取消原因，方便同伴调整安排")
         if now >= meeting.starts_at + timedelta(minutes=meeting.duration):

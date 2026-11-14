@@ -9,7 +9,7 @@ function buddyDrop(suffix){try{localStorage.removeItem(buddyKey(suffix));}catch{
 function clearBuddyDrafts(){try{const prefix=buddyKey('');Object.keys(localStorage).filter(k=>k.startsWith(prefix)).forEach(k=>localStorage.removeItem(k));}catch{}}
 function resetBuddies(){
   if(typeof resetBuddyCover==='function')resetBuddyCover();
-  clearInterval(buddy.timer);clearTimeout(buddy.searchTimer);document.body.classList.remove('in-conversation','chat-typing','in-messages','in-message-list');clearTimeout(buddy.tileTimer);buddy.mapObserver?.disconnect();buddy.map?.remove();
+  clearInterval(buddy.timer);clearTimeout(buddy.searchTimer);document.body.classList.remove('in-conversation','chat-typing','in-messages','in-message-list','in-publish');clearTimeout(buddy.tileTimer);buddy.mapObserver?.disconnect();buddy.map?.remove();
   Object.assign(buddy,{map:null,layer:null,pin:null,tiles:null,point:null,own:null,dirty:false,initialized:false,chatId:null,rows:[],chats:[],active:false,timer:null,picker:false,loading:false,messageLoading:false,mine:[],editId:null,savedPreview:null});
   buddy.listRequest++;buddy.chatRequest++;
   for(const id of ['buddyList','buddyChats','buddyMessages','buddyOwnStatus','buddyBlocks'])$(id).replaceChildren();
@@ -17,18 +17,19 @@ function resetBuddies(){
   $('messageSelfAvatar').replaceChildren();delete $('messageSelfAvatar').dataset.identity;delete $('buddyChats').dataset.signature;$('messageConversationCount').textContent='';$('buddyChatMenu').open=false;
   for(const id of ['buddyUnread','buddyTabUnread'])$(id).classList.add('hidden');
   for(const id of ['buddyPreviewDialog','buddyMapDialog','buddyRatingDialog','buddyFilterDialog'])if($(id).open)$(id).close();
-  $('buddyForm').reset();$('buddyFilterForm').reset();$('buddyMessageForm').reset();$('buddyMessage').style.height='44px';
+  $('buddyForm').reset();$('buddyMoreDetails').open=false;$('buddyReusePlace').classList.add('hidden');$('buddyReuseHint').classList.add('hidden');$('buddyFilterForm').reset();$('buddyMessageForm').reset();$('buddyMessage').style.height='44px';
   $('buddyMapHost').append($('buddyMapWrap'));$('buddyPoint').textContent='未添加地图位置，可直接填写场地发布。';
   for(const id of ['buddyFormMsg','buddyChatMsg','buddyChatsMsg','buddyDraftMsg','buddyBlocksMsg'])$(id).textContent='';
 }
 function buddyRoute(tab,id){navigate(`${tab==='messages'?'messages':`buddies/${tab}`}${id?`/${id}`:''}`);}
 function buddyNavigate(page,route=''){
-  buddy.active=page==='buddies';document.body.classList.remove('in-conversation','in-messages','in-message-list');$('buddyChatMenu').open=false;
+  buddy.active=page==='buddies';document.body.classList.remove('in-conversation','in-messages','in-message-list','in-publish');$('buddyChatMenu').open=false;
   if(!state.user)return;
   if(!buddy.timer)buddy.timer=setInterval(()=>{if(!document.hidden&&state.user)pollBuddyChat();},4000);
   if(!buddy.initialized){buddy.initialized=true;loadOwnBuddy().catch(e=>{$('buddyFormMsg').textContent=e.message;buddy.initialized=false;});updateBuddyUnread().catch(()=>{});}
   if(!buddy.active){buddy.chatId=null;return;}
   const [requested,id]=route.split('/');buddy.tab=['discover','messages','mine','appointments','group'].includes(requested)?requested:'discover';
+  document.body.classList.toggle('in-publish',buddy.tab==='mine');
   const messaging=buddy.tab==='messages'||buddy.tab==='group';
   document.querySelector('.buddy-tabs').classList.toggle('hidden',messaging);
   $('buddyPageTitle').textContent=messaging?'每一次约定，都有回应':'找到你的运动同频';
@@ -51,23 +52,33 @@ function buddyNavigate(page,route=''){
   }
 }
 function ownFields(){return {exercise_type:$('buddySport').value,time:$('buddyTime').value,location:$('buddyPlace').value,note:$('buddyNote').value,point:buddy.point,duration:Number($('buddyDuration').value),capacity:Number($('buddyCapacity').value),level:$('buddyLevel').value,edit_id:buddy.editId};}
-function applyOwnFields(d){$('buddySport').value=d.exercise_type||'羽毛球';$('buddyTime').value=d.time||'';$('buddyPlace').value=d.location||'';$('buddyNote').value=d.note||'';setBuddyPoint(d.point);$('buddyDuration').value=String(d.duration||60);$('buddyCapacity').value=String(d.capacity||2);$('buddyLevel').value=d.level||'不限';buddy.editId=d.edit_id||null;$('buddyCapacity').disabled=!!buddy.editId;}
+function setBuddyDuration(value){const duration=Number(value),select=$('buddyDuration');if(!Number.isInteger(duration)||duration<15||duration>360)return;const text=String(duration);if(!Array.from(select.options).some(option=>option.value===text))select.add(new Option(`${duration} 分钟`,text));select.value=text;}
+function updatePublishSummary(){
+  const sport=$('buddySport').value.trim(),capacity=Number($('buddyCapacity').value),duration=Number($('buddyDuration').value);
+  const people=Number.isInteger(capacity)&&capacity>=2&&capacity<=20?(capacity>2?`${capacity} 人组局`:'找一位同伴'):'请填写人数';
+  $('buddyPublishSummary').textContent=sport?`${sport} · ${duration} 分钟 · ${people}`:'准备好，就邀请同学一起';
+  document.querySelectorAll('[data-buddy-sport]').forEach(button=>{const selected=button.dataset.buddySport===sport;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
+}
+function lastPublishedPlace(){return buddy.mine.filter(row=>row.user_id===state.user?.id&&row.location?.trim()&&row.id!==buddy.editId).sort((a,b)=>b.id-a.id)[0]||null;}
+function renderReusePlace(){const row=lastPublishedPlace();$('buddyReusePlace').classList.toggle('hidden',!row);$('buddyReusePlace').title=row?`沿用 ${row.location} 和 ${row.duration} 分钟`:'';}
+function reuseLastPlace(){const row=lastPublishedPlace();if(!row)return;$('buddyPlace').value=row.location;setBuddyDuration(row.duration);setBuddyPoint(row.latitude==null?null:{latitude:row.latitude,longitude:row.longitude});$('buddyReuseHint').textContent=`已沿用：${row.location} · ${row.duration} 分钟，仍可修改。`;$('buddyReuseHint').classList.remove('hidden');saveBuddyDraft();}
+function applyOwnFields(d){$('buddySport').value=d.exercise_type||'羽毛球';$('buddyTime').value=d.time||'';$('buddyPlace').value=d.location||'';$('buddyNote').value=d.note||'';setBuddyPoint(d.point);setBuddyDuration(d.duration||60);$('buddyCapacity').value=String(d.capacity||2);$('buddyLevel').value=d.level||'不限';buddy.editId=d.edit_id||null;$('buddyCapacity').disabled=!!buddy.editId;updatePublishSummary();}
 function saveBuddyDraft(){
-  if(!state.user)return;buddy.dirty=true;const ok=buddyStore('status',ownFields());
+  if(!state.user)return;buddy.dirty=true;updatePublishSummary();const ok=buddyStore('status',ownFields());
   $('buddyDraftMsg').textContent=ok?'编辑内容已暂存到此浏览器，尚未公开。':'浏览器无法暂存，请保留当前页面。';$('buddyDiscardDraft').classList.remove('hidden');
 }
 async function loadOwnBuddy(){
   const epoch=state.epoch,rows=await api('/api/activities/mine');if(epoch!==state.epoch)return;buddy.mine=rows;buddy.own=rows.find(r=>new Date(r.starts_at)>new Date())||null;renderOwnBuddy();
   if(buddy.dirty)return;
-  const draft=buddyRead('status');if(draft){applyOwnFields(draft);if(typeof setBuddyCover==='function')setBuddyCover(rows.find(r=>r.id===buddy.editId));buddy.dirty=true;$('buddyDraftMsg').textContent='已恢复本地草稿，请核对后发布；未上传的图片需重新选择。';$('buddyDiscardDraft').classList.remove('hidden');}
+  const draft=buddyRead('status');if(draft){applyOwnFields(draft);if(typeof setBuddyCover==='function')setBuddyCover(rows.find(r=>r.id===buddy.editId));buddy.dirty=true;$('buddyDraftMsg').textContent='已恢复本地草稿，请核对后发布；未上传的图片需重新选择。';$('buddyDiscardDraft').classList.remove('hidden');renderOwnBuddy();}
 }
 function renderOwnBuddy(){
   $('buddyOwnStatus').innerHTML=buddy.mine.map(row=>`<div class="own-activity"><div><span class="pill">${new Date(row.starts_at)>new Date()?'已公开':'已开始'}</span><h3>${escapeHTML(row.exercise_type)}${row.capacity>2?` · ${row.joined}/${row.capacity} 人组局`:''}</h3><p class="fine">${escapeHTML(buddyTime(row.starts_at))} · ${escapeHTML(row.location)}</p></div><div class="actions">${new Date(row.starts_at)>new Date()?`<button type="button" class="text-button" data-edit-activity="${row.id}">编辑</button>`:''}${row.meetup_id?`<button type="button" class="text-button" data-open-meetup="${row.meetup_id}">查看组局</button>`:''}<button type="button" class="text-button" data-remove-activity="${row.id}">撤下</button></div></div>`).join('')||'<strong>发布第一次运动邀请</strong><p class="fine">可以同时发布最多三条未来状态。</p>';
-  $('buddyFormTitle').textContent=buddy.editId?'编辑运动状态':'发布运动状态';$('buddyRemove').classList.add('hidden');
+  $('buddyFormTitle').textContent=buddy.editId?'调整这场运动':'发起一场运动';$('buddyPublish').firstChild.textContent=buddy.editId?'预览修改 ':'预览邀请 ';$('buddyRemove').classList.add('hidden');$('buddyPublishedCount').textContent=String(buddy.mine.length);$('buddyPublishedPanel').classList.toggle('hidden',!buddy.mine.length&&!buddy.editId);renderReusePlace();updatePublishSummary();
   const own=buddy.own;$('homeBuddyStatus').textContent=own?`${own.exercise_type} · ${buddyTime(own.starts_at)} · ${own.location}`:'下一次想什么时候运动？发布状态，邀请同伴一起出发。';
 }
-function editActivity(id){const row=buddy.mine.find(r=>r.id===id);if(!row)return;const d=new Date(row.starts_at);applyOwnFields({...row,edit_id:id,time:`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,point:row.latitude==null?null:{latitude:row.latitude,longitude:row.longitude}});buddy.savedPreview=null;if(typeof setBuddyCover==='function')setBuddyCover(row);buddy.dirty=true;renderOwnBuddy();$('buddyFormTitle').scrollIntoView({behavior:'smooth',block:'start'});}
-function newActivity(){buddy.editId=null;buddy.savedPreview=null;buddy.dirty=false;buddyDrop('status');$('buddyForm').reset();$('buddyCapacity').disabled=false;setBuddyPoint(null);if(typeof resetBuddyCover==='function')resetBuddyCover();$('buddyDraftMsg').textContent='';$('buddyDiscardDraft').classList.add('hidden');renderOwnBuddy();}
+function editActivity(id){const row=buddy.mine.find(r=>r.id===id);if(!row)return;const d=new Date(row.starts_at);applyOwnFields({...row,edit_id:id,time:`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,point:row.latitude==null?null:{latitude:row.latitude,longitude:row.longitude}});buddy.savedPreview=null;if(typeof setBuddyCover==='function')setBuddyCover(row);$('buddyMoreDetails').open=!!(row.cover_url||row.note||row.level!=='不限');$('buddyReuseHint').classList.add('hidden');buddy.dirty=true;renderOwnBuddy();$('buddyFormTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'});}
+function newActivity(){buddy.editId=null;buddy.savedPreview=null;buddy.dirty=false;buddyDrop('status');$('buddyForm').reset();$('buddyMoreDetails').open=false;$('buddyReuseHint').classList.add('hidden');$('buddyCapacity').disabled=false;setBuddyPoint(null);if(typeof resetBuddyCover==='function')resetBuddyCover();$('buddyDraftMsg').textContent='';$('buddyDiscardDraft').classList.add('hidden');renderOwnBuddy();}
 async function withdrawActivity(id){if(!confirm('撤下这条状态？已有约定和聊天记录会保留。'))return;await api(`/api/activities/${id}`,{method:'DELETE'});if(buddy.editId===id)newActivity();await loadOwnBuddy();}
 
 function setBuddyPoint(point){buddy.point=point;$('buddyPoint').textContent=point?`已选地图位置：${point.latitude.toFixed(4)}, ${point.longitude.toFixed(4)}`:'未添加地图位置，可直接填写场地发布。';$('buddyClearPoint').classList.toggle('hidden',!point);}
@@ -96,7 +107,7 @@ function previewBuddy(){
   const date=new Date($('buddyTime').value);if(!Number.isFinite(date.getTime())||date<=new Date()){$('buddyFormMsg').textContent='请选择未来的运动时间。';return;}
   buddy.preview={exercise_type:$('buddySport').value.trim(),location:$('buddyPlace').value.trim(),starts_at:date.toISOString(),note:$('buddyNote').value.trim(),latitude:buddy.point?.latitude??null,longitude:buddy.point?.longitude??null,duration:Number($('buddyDuration').value),capacity:Number($('buddyCapacity').value),level:$('buddyLevel').value};
   if(!buddy.preview.exercise_type||!buddy.preview.location){$('buddyFormMsg').textContent='请填写运动项目和场地。';return;}
-  $('buddyPreview').innerHTML=`<h3>${escapeHTML(buddy.preview.exercise_type)} · ${buddy.preview.capacity>2?`${buddy.preview.capacity} 人组局`:'找搭子'}</h3><p>${escapeHTML(buddyTime(buddy.preview.starts_at))}</p><p>${escapeHTML(buddy.preview.location)}</p><p class="fine">${escapeHTML(buddy.preview.note)}</p><p class="fine">${buddy.point?'含地图位置':'仅公开文字地点，也能在列表中被找到'}</p>`;
+  $('buddyPreview').innerHTML=`<span class="pill">${buddy.preview.capacity>2?`${buddy.preview.capacity} 人组局`:'找一位同伴'}</span><h3>${escapeHTML(buddy.preview.exercise_type)}</h3><p>${escapeHTML(buddyTime(buddy.preview.starts_at))} · ${buddy.preview.duration} 分钟</p><p>⌖ ${escapeHTML(buddy.preview.location)}</p><p class="fine">水平：${escapeHTML(buddy.preview.level)}</p>${buddy.preview.note?`<p class="preview-note">${escapeHTML(buddy.preview.note)}</p>`:''}<p class="fine">${buddy.point?'已附地图位置':'按上方文字地点集合'}</p>`;
   const cover=typeof buddyCover!=='undefined'?(buddyCover.objectURL||(!buddyCover.remove&&buddyCover.url)):null;if(cover){const img=document.createElement('img');img.className='preview-cover';img.src=cover;img.alt='待发布的活动封面';$('buddyPreview').prepend(img);}
   $('buddyPreviewMsg').textContent='';$('buddyPreviewDialog').showModal();
 }
@@ -200,6 +211,7 @@ function celebrate(el){el.classList.remove('success-pop');void el.offsetWidth;el
 
 $('buddyForm').addEventListener('submit',e=>{e.preventDefault();previewBuddy();});
 $('buddyForm').addEventListener('input',saveBuddyDraft);
+$('buddyPlace').addEventListener('input',()=>{setBuddyPoint(null);$('buddyReuseHint').classList.add('hidden');});
 $('buddyFilterForm').addEventListener('submit',e=>{e.preventDefault();busy($('buddyFilterApply'),()=>loadBuddyStatuses(),'buddyListMsg');});
 $('buddyMessageForm').addEventListener('submit',e=>{e.preventDefault();sendBuddyMessage();});
 function resizeBuddyComposer(){const input=$('buddyMessage'),box=$('buddyMessages'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<50;input.style.height='44px';input.style.height=`${Math.min(112,Math.max(44,input.scrollHeight))}px`;if(bottom)box.scrollTop=box.scrollHeight;}
@@ -207,7 +219,7 @@ $('buddyMessage').addEventListener('input',()=>{if(buddy.chatId)buddyStore(`chat
 $('buddyMessages').addEventListener('scroll',()=>markBuddyRead().catch(()=>{}));
 $('buddyRatingForm').addEventListener('submit',e=>{e.preventDefault();saveRating();});
 const buddyActions={buddyConfirmPublish:publishBuddy,buddyCancelPreview:()=>$('buddyPreviewDialog').close(),buddyRemove:removeBuddy,
-  buddyDiscardDraft:()=>{if(confirm('放弃尚未公开的修改？'))newActivity();},buddyNewStatus:newActivity,
+  buddyDiscardDraft:()=>{if(confirm('放弃尚未公开的修改？'))newActivity();},buddyNewStatus:()=>{newActivity();$('buddyFormTitle').scrollIntoView({block:'start'});},buddyReusePlace:reuseLastPlace,
   buddyListView:()=>showBuddyMap(false),buddyMapView:()=>showBuddyMap(true),buddyMapRetry:()=>useBuddyTiles(true),buddyPickPoint:openPointPicker,
   buddyClearPoint:()=>{setBuddyPoint(null);saveBuddyDraft();},buddyCancelPoint:()=>$('buddyMapDialog').close(),buddyConfirmPoint:()=>{setBuddyPoint(buddy.pickerPoint);saveBuddyDraft();$('buddyMapDialog').close();},
   buddyMore:()=>busy($('buddyMore'),()=>loadBuddyStatuses(true),'buddyListMsg'),buddyChatsMore:()=>busy($('buddyChatsMore'),()=>loadBuddyChats(true),'buddyChatsMsg'),

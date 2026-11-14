@@ -87,7 +87,9 @@ def main():
                     page.wait_for_function("campus.profile!==null")
 
                     # One failed GET after a successful POST must recover automatically.
+                    page.locator('[data-profile-open="identityEditDialog"]').click()
                     page.locator("#profileAvatarFile").set_input_files(str(first))
+                    page.evaluate("document.querySelector('#identityEditDialog').close()")
                     image_visible(page)
                     expect(page.locator("#avatarMsg")).to_contain_text("头像已保存")
                     expect(page.locator("#retryProfileAvatar")).to_be_hidden()
@@ -98,7 +100,9 @@ def main():
 
                     # Persistent GET failure keeps the selected picture and offers a GET-only retry.
                     mode.update(value="always", gets=0)
+                    page.locator('[data-profile-open="identityEditDialog"]').click()
                     page.locator("#profileAvatarFile").set_input_files(str(second))
+                    page.evaluate("document.querySelector('#identityEditDialog').close()")
                     expect(page.locator("#retryProfileAvatar")).to_be_visible()
                     expect(page.locator("#avatarMsg")).to_contain_text("头像已保存，但图片暂时加载失败")
                     image_visible(page, width=800)
@@ -135,11 +139,13 @@ def main():
                     mode.update(value="hold", gets=0)
                     page.reload()
                     page.wait_for_function("campus.profile && !!campus.profile.avatar_url")
+                    page.locator('[data-profile-open="identityEditDialog"]').click()
                     expect(page.locator("#removeProfileAvatar")).to_be_visible()
                     page.wait_for_timeout(100)
                     assert held, "The old image response must be delayed for this test"
                     page.locator("#removeProfileAvatar").click()
                     page.wait_for_function("campus.profile && !campus.profile.avatar_url")
+                    page.evaluate("document.querySelector('#identityEditDialog').close()")
                     for route in held:
                         route.fulfill(status=200, content_type="image/jpeg", body=old_image)
                     held.clear()
@@ -155,6 +161,7 @@ def main():
                     page.wait_for_function("campus.profile && !!campus.profile.avatar_url")
                     page.wait_for_timeout(100)
                     assert held
+                    page.evaluate("openProfileDialog('profileSettingsDialog')")
                     page.locator("#logoutButton").click()
                     expect(page.locator("#authPanel")).to_be_visible()
                     page.locator("#username").fill("avatar_next")

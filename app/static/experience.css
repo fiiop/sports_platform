@@ -1,0 +1,60 @@
+/* Shared 4.3 layout: invitations first, quieter controls and readable details. */
+:root{--bg:#f6f7f4}
+.top-account{display:none}
+.signed-in .topbar{height:64px;border-bottom:0}
+.signed-in .top-actions{display:none}
+.signed-in .top-account{display:grid;place-items:center;padding:0;width:42px;height:42px;min-height:42px;border-radius:50%;background:var(--soft);margin-left:auto}
+.top-account .chat-avatar{width:42px;height:42px;border-radius:50%}
+.signed-in .brand{font-size:21px;gap:9px}.signed-in .brand-icon{width:35px;height:35px;font-size:28px;border-radius:12px}.signed-in .brand small{font-size:8px}
+.campus-home-heading{margin:0 0 15px;align-items:center;flex-wrap:nowrap}
+.home-campus{margin:0 0 5px;font-size:12px;color:var(--muted)}
+.campus-home-heading h1{font-size:32px;line-height:1.3;margin:0;letter-spacing:-1px}
+.home-heading-action{border-radius:30px;min-height:44px;font-size:14px;padding:10px 18px;flex-shrink:0}
+.home-discovery{margin:0 0 20px}.home-sport-shortcuts{margin:0 0 22px;gap:9px}
+.home-sport-shortcuts button{border-radius:15px;font-size:13px;min-height:52px;padding:10px 8px;gap:8px}
+.home-sport-shortcuts button:first-child{background:var(--soft);border-color:var(--soft)}
+.home-discovery-heading{margin-bottom:12px;align-items:center}.home-discovery-heading h2{font-size:18px;letter-spacing:0;margin:0}
+.home-discovery-heading>button{font-size:13px;min-height:36px;padding:6px 8px}
+#homeDiscoveryMsg:empty{display:none}
+.home-activity-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.home-more-activities{background:transparent!important;border:0;margin:14px 0 0;color:var(--green);min-height:46px}
+.campus-activity,.buddy-status-grid .campus-activity{border:1px solid var(--line);box-shadow:0 5px 24px #20362d06;border-radius:22px}
+.activity-cover{height:150px}.activity-cover-label{font-size:10px;right:12px;bottom:9px}.activity-sport{font-size:12px;padding:5px 10px;border-radius:8px}
+.activity-content{padding:17px}.activity-title h3{font-size:22px;line-height:1.35;font-weight:750}
+.activity-seats{font-size:12px;padding:5px 8px;border-radius:7px}.activity-when{font-size:16px;margin:9px 0 3px;line-height:1.5}.activity-when>span{font-size:12px;white-space:nowrap}
+.activity-place{font-size:13px;line-height:1.5;margin:0 0 10px}.activity-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.activity-tags span{font-size:11px;color:var(--muted);padding:3px 8px;background:var(--bg);border-radius:5px}
+.activity-host{padding:12px 0 0;gap:9px}.activity-host strong{font-size:13px;line-height:1.5}.activity-host>div>span{font-size:11px;margin:2px 0 0}
+.activity-host>button{min-height:42px;border-radius:24px;font-size:12px;padding:8px 13px;flex-shrink:0}
+.home-record-link{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--paper);gap:12px}
+.home-record-link p{margin:4px 0 0;font-size:13px;color:var(--muted)}.home-record-link strong{font-size:24px;line-height:1.3;color:var(--ink);font-weight:700}.home-record-link p>span{padding-left:10px}
+.home-record-link>button{font-size:13px;white-space:nowrap}
+.home-own-link{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}.home-own-link p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}.home-own-link button{font-size:12px;white-space:nowrap;flex-shrink:0}
+.next-meetup{border:1px solid var(--green);background:var(--paper);position:relative;padding:18px 20px;margin:0 0 18px!important}
+.next-meetup .section-head{margin-bottom:6px}.next-meetup .eyebrow{color:var(--green);font-size:12px;letter-spacing:0}.next-meetup .section-head button{font-size:12px;min-height:34px;padding:4px 0}
+.next-meetup-body{display:flex;align-items:center;justify-content:space-between;gap:12px}.next-meetup-body h2{margin:0 0 5px;font-size:22px}.next-meetup-body p{margin:3px 0;font-size:13px}.next-meetup-body>button{font-size:12px;flex-shrink:0;border-radius:22px;padding:10px 14px}
+.record-insights{margin-top:20px;border-top:1px solid var(--line);padding-top:10px}.record-insights>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;min-height:60px;font-size:17px;font-weight:700}.record-insights>summary small{font-size:12px;color:var(--muted);font-weight:400}.record-insights .home-progress-overview{margin:12px 0 18px}
+.record-insights .two-col>.card{margin-bottom:14px}.record-insights .chart-card{margin-bottom:20px}
+.buddy-page-heading h1{font-size:26px;margin:3px 0}.buddy-page-heading .muted{display:none}.buddy-page-heading .eyebrow{font-size:12px;letter-spacing:0}
+.discovery-list-heading h2{display:none}.discovery-list-heading p{font-size:12px;max-width:none}.discovery-list-heading{margin:4px 0 8px}.buddy-view-switch button{font-size:12px;min-height:36px}
+#buddyListMsg{font-size:12px;margin:0 0 12px;min-height:0}.buddy-tabs button{font-size:14px}
+.activity-detail-dialog{padding:0;max-width:560px;max-height:90dvh;overflow:auto;background:var(--paper)}
+.detail-toolbar{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 18px;background:var(--paper);z-index:2;border-bottom:1px solid var(--line)}.detail-toolbar>span{font-size:13px;color:var(--muted)}.detail-toolbar button{font-size:27px;padding:0 10px;min-height:40px}
+.activity-detail-dialog .activity-cover{height:200px;border-radius:0}.detail-content{padding:22px}.detail-level{color:var(--green);font-size:12px}.detail-content h2{font-size:28px;margin:8px 0 20px;line-height:1.3}.activity-facts{margin:0 0 20px}.activity-facts>div{display:flex;align-items:baseline;gap:15px;margin:12px 0}.activity-facts dt{font-size:13px;color:var(--muted);white-space:nowrap}.activity-facts dd{font-size:15px;margin:0;overflow-wrap:anywhere}
+.detail-host{display:flex;align-items:center;gap:12px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.detail-host .activity-avatar{width:42px;height:42px}.detail-host strong{font-size:15px}.detail-host p{font-size:12px;color:var(--muted);margin:3px 0 0}
+.detail-content section h3{font-size:16px;margin:20px 0 8px}.detail-note{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin:0;color:var(--muted)}
+.detail-people{display:flex;flex-wrap:wrap;gap:16px}.detail-people>span{display:flex;align-items:center;gap:7px}.detail-people small{font-size:12px;max-width:120px;overflow-wrap:anywhere}
+.detail-footer{position:sticky;bottom:0;background:var(--paper);padding:12px 20px max(16px,env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center}.detail-footer>button:last-child{flex:1;border-radius:25px;font-size:15px}.detail-footer>button:first-child{font-size:13px}.detail-loading{font-size:20px;padding:24px 20px}.activity-detail-dialog>.msg{padding:0 20px 12px}.activity-detail-dialog>.msg:empty{display:none}
+@media(max-width:1000px){.home-activity-list{grid-template-columns:1fr 1fr}.home-activity-list>.campus-activity:first-child{grid-column:1/-1}.home-activity-list>.campus-activity:first-child .activity-cover{height:190px}}
+@media(max-width:640px){
+  .signed-in .topbar{padding:0 18px;height:60px}.signed-in .content{padding-top:15px}
+  .campus-home-heading{margin-bottom:18px}.campus-home-heading h1{font-size:29px}.campus-home-heading .home-heading-action{font-size:13px;padding:10px 15px}
+  .home-campus{font-size:12px;margin-bottom:7px}.home-sport-shortcuts{gap:7px;margin-bottom:20px}.home-sport-shortcuts button{font-size:12px;gap:5px;padding:10px 3px;min-height:49px}
+  .home-discovery-heading{margin-bottom:10px}.home-discovery-heading h2{font-size:18px}
+  .home-activity-list,.buddy-status-grid{grid-template-columns:1fr;gap:17px}.home-activity-list>.campus-activity:first-child .activity-cover{height:145px}.activity-cover{height:132px}.activity-content{padding:16px}.activity-title h3{font-size:23px}.activity-seats{font-size:12px}.activity-when{font-size:16px}.activity-place{font-size:13px}.activity-host>button{font-size:12px;padding:8px 12px}.activity-host .participant-faces{display:none}
+  .buddy-page-heading{margin-bottom:12px}.buddy-page-heading h1{font-size:25px}.buddy-tabs{margin-bottom:12px}.buddy-tabs button{font-size:13px}.filter-chips button{font-size:13px;min-height:39px}.sport-search input{font-size:15px}.sport-search button{font-size:12px}
+  .record-insights>summary{flex-wrap:wrap;gap:2px;padding:12px 0}.record-insights>summary small{width:100%}
+  .activity-detail-dialog{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-height:92dvh;border-radius:24px 24px 0 0}.activity-detail-dialog .activity-cover{height:165px}.detail-content{padding:20px}.detail-content h2{font-size:26px}.detail-toolbar{padding:7px 15px}
+}
+:root[data-theme=night] .campus-activity{box-shadow:none}
+@media(prefers-reduced-motion:no-preference){.activity-detail-dialog[open]{animation:sheet-appear .18s ease-out}.campus-activity{transition:box-shadow .18s,transform .18s}}

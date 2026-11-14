@@ -1,10 +1,14 @@
-<section class="card profile-card identity-card">
-  <div class="identity-avatar"><img id="profileAvatarPreview" class="hidden" alt="我的头像"><span id="profileAvatarFallback" aria-hidden="true">动</span></div>
-  <div class="identity-heading"><span class="eyebrow">认识同校的运动伙伴</span><h2 id="userArea"></h2><p id="profileBioText" class="muted">写一句介绍，让同伴更了解你。</p><small id="profileAccountLabel" class="fine"></small></div>
+<section class="profile-hero" aria-label="我的个人资料">
+  <div class="profile-identity-row">
+    <div class="identity-avatar"><img id="profileAvatarPreview" class="hidden" alt="我的头像"><span id="profileAvatarFallback" aria-hidden="true">动</span></div>
+    <div class="identity-heading"><p id="profileSchoolLabel" class="profile-campus-label">我的校园</p><h2 id="userArea"></h2><small id="profileAccountLabel" class="fine"></small></div>
+    <button type="button" class="profile-edit-button" data-profile-open="identityEditDialog" aria-label="编辑个人资料">编辑资料 <span aria-hidden="true">↗</span></button>
+  </div>
+  <p id="profileBioText" class="profile-bio">写一句介绍，让同伴更了解你。</p>
+  <div class="profile-avatar-status"><p class="fine" id="avatarMsg" role="status">照片选填，支持 JPEG、PNG、WebP，最多 5 MB。</p><button type="button" id="retryProfileAvatar" class="text-button hidden">重新加载头像</button></div>
 </section>
-<section class="card identity-editor">
-  <div class="section-head"><div><h2>让同伴认识你</h2><p class="fine">头像、昵称和简介会展示给已登录的同学。</p></div></div>
-  <div class="identity-photo-controls"><label class="photo-file-label" for="profileAvatarFile">更换头像<input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" class="text-button hidden" id="removeProfileAvatar">移除头像</button></div>
-  <p class="fine" id="avatarMsg" role="status">照片选填，支持 JPEG、PNG、WebP，最多 5 MB。</p><button type="button" id="retryProfileAvatar" class="text-button hidden">重新加载头像</button>
-  <form id="identityForm"><label>大家怎么称呼你<input id="profileNickname" maxlength="30" autocomplete="nickname" placeholder="昵称选填，留空使用账号名"></label><label>关于你的运动日常<textarea id="profileBio" maxlength="160" rows="3" placeholder="例如：羽毛球新手，喜欢周末下午运动，欢迎一起练球。"></textarea></label><div class="actions"><button type="submit" id="identitySave">保存资料</button></div><p id="identityMsg" class="msg" role="status"></p></form>
-</section>
+<dialog id="identityEditDialog" class="profile-dialog" aria-labelledby="identityEditTitle">
+  <header class="profile-dialog-heading"><div><p class="eyebrow">认识一起运动的你</p><h2 id="identityEditTitle">编辑个人资料</h2></div><button type="button" class="profile-dialog-close" data-profile-close aria-label="关闭编辑资料">×</button></header>
+  <div class="profile-editor-photo"><span class="identity-avatar"><img id="identityEditorPhoto" class="hidden" alt="当前头像预览"><span id="identityEditorFallback" aria-hidden="true">动</span></span><div><div class="identity-photo-controls"><label class="photo-file-label" for="profileAvatarFile">更换头像<input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" class="text-button hidden" id="removeProfileAvatar">移除头像</button></div><p id="identityAvatarStatus" class="fine" role="status">照片选填，支持 JPEG、PNG、WebP，最多 5 MB。</p></div></div>
+  <form id="identityForm"><label>大家怎么称呼你<input id="profileNickname" maxlength="30" autocomplete="nickname" placeholder="昵称选填，留空使用账号名"></label><label>关于你的运动日常<textarea id="profileBio" maxlength="160" rows="3" placeholder="例如：羽毛球新手，周末下午常在体育馆，欢迎一起练球。"></textarea></label><p class="fine">头像、昵称和简介会展示给已登录的同学。</p><div class="profile-dialog-actions"><button type="submit" id="identitySave">保存资料</button><button type="button" class="ghost" data-profile-close>完成</button></div><p id="identityMsg" class="msg" role="status"></p></form>
+</dialog>

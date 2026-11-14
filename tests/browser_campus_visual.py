@@ -71,12 +71,14 @@ def profile(page, context, nickname, bio, image):
     page.goto(BASE + "/#profile")
     expect(page.locator("#appPanel")).to_be_visible()
     page.wait_for_function("campus.profile !== null")
+    page.locator('[data-profile-open="identityEditDialog"]').click()
     page.locator("#profileNickname").fill(nickname)
     page.locator("#profileBio").fill(bio)
     page.locator("#identitySave").click()
     expect(page.locator("#identityMsg")).to_contain_text("已")
     page.locator("#profileAvatarFile").set_input_files(str(image))
     page.wait_for_function("campus.profile && !!campus.profile.avatar_url")
+    page.evaluate("document.querySelector('#identityEditDialog').close()")
     visible_image(page, "#profileAvatarPreview")
     data = success(context.request.get(BASE + "/api/profile"))
     assert data["nickname"] == nickname and data["bio"] == bio
@@ -160,6 +162,7 @@ def main():
                     owner.locator("#buddyTime").fill(tomorrow + "T10:00")
                     owner.locator("#buddyPlace").fill("测试体育馆 2 号场")
                     owner.locator("#buddyCapacity").fill("3")
+                    owner.locator('#buddyMoreDetails').evaluate('el => el.open = true')
                     owner.locator("#buddyLevel").select_option("新手")
                     owner.locator("#buddyCoverFile").set_input_files(str(cover))
                     visible_image(owner, "#buddyCoverPreview")
@@ -189,7 +192,8 @@ def main():
                     snapshot(guest, "campus-v5-home.png")
 
                     # The homepage's private-chat button must target the card owner.
-                    guest.locator(f'#homeActivityList [data-home-chat="{owner_id}"]').click()
+                    guest.locator(f'#homeActivityList [data-activity-details="{pair["id"]}"]').click()
+                    guest.locator('#activityDetailAction').click()
                     expect(guest.locator("#buddyConversation")).to_be_visible()
                     guest.locator("#buddyMessage").fill("这是临时校园活动测试消息，一起跑步吧。")
                     guest.locator("#buddySend").click()
@@ -199,7 +203,8 @@ def main():
 
                     # Join a group from the homepage, then verify the confirmed event stays above recommendations.
                     open_page(guest, "home")
-                    guest.locator(f'#homeActivityList [data-home-join="{group["id"]}"]').click()
+                    guest.locator(f'#homeActivityList [data-activity-details="{group["id"]}"]').click()
+                    guest.locator('#activityDetailAction').click()
                     expect(guest.locator("#groupChatPanel")).to_be_visible()
                     expect(guest.locator("#meetupDetail")).to_contain_text("2/3")
                     open_page(guest, "home")
@@ -240,6 +245,7 @@ def main():
                     guest.set_viewport_size({"width": 390, "height": 844})
                     for theme in ("night", "ocean", "lilac", "forest"):
                         open_page(guest, "profile")
+                        guest.evaluate("openProfileDialog('profileThemeDialog')")
                         guest.locator(f'[data-theme-choice="{theme}"]').click()
                         expect(guest.locator("#themeMsg")).to_contain_text("已保存")
                         open_page(guest, "buddies")
@@ -269,12 +275,14 @@ def main():
 
                     # Removing an image must not remove the underlying identity or activity.
                     open_page(owner, "profile")
+                    owner.locator('[data-profile-open="identityEditDialog"]').click()
                     owner.locator("#removeProfileAvatar").click()
                     owner.wait_for_function("campus.profile && !campus.profile.avatar_url")
                     data = success(owner_context.request.get(BASE + "/api/profile"))
                     assert not data["avatar_url"] and data["nickname"] == "阿青 · 测试"
                     open_page(owner, "buddies/mine")
                     owner.locator(f'[data-edit-activity="{group["id"]}"]').click()
+                    owner.locator('#buddyMoreDetails').evaluate('el => el.open = true')
                     visible_image(owner, "#buddyCoverPreview")
                     owner.locator("#buddyCoverRemove").click()
                     expect(owner.locator("#buddyCoverPreview")).to_be_hidden()
@@ -298,6 +306,7 @@ def main():
                     owner.locator("#buddySport").fill("篮球")
                     owner.locator("#buddyTime").fill(tomorrow + "T20:00")
                     owner.locator("#buddyPlace").fill("测试篮球场")
+                    owner.locator('#buddyMoreDetails').evaluate('el => el.open = true')
                     owner.locator("#buddyCoverFile").set_input_files(str(cover))
                     owner.locator("#buddyPublish").click()
                     owner.locator("#buddyConfirmPublish").click()
