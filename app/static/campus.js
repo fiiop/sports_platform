@@ -92,7 +92,201 @@ async function submitRepeatMeeting(){
 }
 async function withConflict(url,payload){try{return await api(url,{method:'POST',body:JSON.stringify(payload)});}catch(e){if(e.detail?.conflicts&&confirm(e.detail.message))return api(url,{method:'POST',body:JSON.stringify({...payload,allow_conflict:true})});throw e;}}
 async function refreshMeetingResult(m){if(campus.meeting?.id===m.id){campus.meeting=m;$('meetupDetail').innerHTML=meetingCard(m,true);const canRead=m.kind==='group'&&m.members.some(p=>p.user_id===state.user.id&&['accepted','cancelled'].includes(p.status));$('groupChatPanel').classList.toggle('hidden',!canRead);updateGroupComposer();}await loadMeetups();if(buddy.chatId)await loadPinnedMeetup(buddy.chatId);if(m.state==='completed'){const epoch=state.epoch,p=await api('/api/profile');if(epoch===state.epoch){if(campus.profile)Object.assign(campus.profile,{completed:p.completed,is_admin:p.is_admin});$('completedCount').textContent=`已完成 ${p.completed} 次约定`;}}}
-async function decideMeeting(id,action,reason=''){const m=findMeeting(id);if(!m)throw new Error('请刷新约定后重试。');const epoch=state.epoch,result=await withConflict(`/api/meetups/${id}/decision`,{action,revision:m.revision,reason});if(epoch!==state.epoch)return;await refreshMeetingResult(result);notify(action==='attend'?'已记录你的参加确认':action==='accept'?'邀请已接受':'约定已更新');}
+
+async function decideMeeting(id, action, reason = '') {
+    const m = findMeeting(id);
+
+    if (!m) {
+        throw new Error('请刷新约定后重试。');
+    }
+
+    const epoch = state.epoch;
+
+    // 记录接受邀请之前船上的人数
+    const oldCount = m.members.filter(
+        p => p.status === 'accepted'
+    ).length;
+
+    // 执行原有的接受、拒绝或确认参加操作
+    const result = await withConflict(
+        `/api/meetups/${id}/decision`,
+        {
+            action,
+            revision: m.revision,
+            reason
+        }
+    );
+
+    if (epoch !== state.epoch) return;
+
+    // 保留原来的数据刷新逻辑
+    await refreshMeetingResult(result);
+
+    // 只有多人组局接受邀请时，才播放上船动画
+    if (action === 'accept' && result.kind === 'group') {
+        const newCount = result.members.filter(
+            p => p.status === 'accepted'
+        ).length;
+
+        if (newCount > oldCount) {
+            showBoatJoinAnimation(result, oldCount);
+        }
+    }
+
+    notify(
+        action === 'attend'
+            ? '已记录你的参加确认'
+            : action === 'accept'
+                ? '邀请已接受'
+                : '约定已更新'
+    );
+}
+
+/* =====================================
+   小船载伙伴动画
+   ===================================== */
+
+function showBoatJoinAnimation(meeting, oldCount) {
+
+    // 统计已经接受邀请的真实人数
+    const people = meeting.members.filter(
+        p => p.status === 'accepted'
+    );
+
+    const count = people.length;
+
+    if (count <= oldCount) return;
+
+    // 避免重复出现动画
+    document.getElementById('boatJoinAnimation')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'boatJoinAnimation';
+    overlay.className = 'boat-join-overlay';
+
+    // 根据实际人数生成船上的人物
+    const passengers = people.map((person, index) => `
+        <span
+            class="boat-passenger ${index >= oldCount ? 'boat-new-passenger' : ''}"
+            style="--person-index:${index}"
+            title="${escapeHTML(chatName(person))}"
+        >🧑</span>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="boat-join-dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-label="伙伴加入动画">
+
+            <button class="boat-close"
+                    type="button"
+                    aria-label="关闭动画">×</button>
+
+            <div class="boat-heading">
+                <span class="boat-sparkle">✦</span>
+                <h2>一起乘风出发！</h2>
+                <p>${escapeHTML(meeting.exercise_type)} · 新伙伴加入啦</p>
+            </div>
+
+            <div class="boat-scene">
+
+                <div class="boat-sun"></div>
+
+                <div class="boat-cloud cloud-one">☁</div>
+                <div class="boat-cloud cloud-two">☁</div>
+
+                <div class="boat-passengers">
+                    ${passengers}
+                </div>
+
+                <svg class="boat-svg"
+                     viewBox="0 0 320 125"
+                     xmlns="http://www.w3.org/2000/svg">
+
+                    <!-- 船身 -->
+                    <path d="M28 65 Q160 115 292 65
+                             L267 106 Q160 132 53 106 Z"
+                          fill="#B97948"/>
+
+                    <path d="M28 65 Q160 115 292 65"
+                          fill="none"
+                          stroke="#89552F"
+                          stroke-width="7"
+                          stroke-linecap="round"/>
+
+                    <!-- 船舷 -->
+                    <path d="M55 80 Q160 116 265 80"
+                          fill="none"
+                          stroke="#E8B77D"
+                          stroke-width="6"/>
+
+                    <!-- 装饰 -->
+                    <circle cx="160" cy="91" r="5"
+                            fill="#FFE6BD"/>
+
+                    <path d="M65 105 Q160 126 255 105"
+                          fill="none"
+                          stroke="#8D5737"
+                          stroke-width="3"/>
+                </svg>
+
+                <div class="boat-wave wave-one"></div>
+                <div class="boat-wave wave-two"></div>
+                <div class="boat-wave wave-three"></div>
+
+            </div>
+
+            <div class="boat-count">
+                <strong>${count}</strong>
+                <span>位伙伴已经上船</span>
+            </div>
+
+            <p class="boat-message">
+                ${count >= meeting.capacity
+                    ? '船员已集结完毕，出发！'
+                    : '每多一位伙伴，旅程就更精彩！'}
+            </p>
+
+            <button class="boat-confirm" type="button">
+                太棒啦，出发！
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 关闭动画
+    const closeBoat = () => {
+        if (!overlay.isConnected) return;
+
+        overlay.classList.add('boat-leaving');
+
+        setTimeout(() => overlay.remove(), 350);
+    };
+
+    overlay.querySelector('.boat-close')
+        .addEventListener('click', closeBoat);
+
+    overlay.querySelector('.boat-confirm')
+        .addEventListener('click', closeBoat);
+
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) {
+            closeBoat();
+        }
+    });
+
+    // 自动关闭
+    const autoClose = setTimeout(closeBoat, 5000);
+
+    overlay.addEventListener('click', () => {
+        if (!overlay.isConnected) {
+            clearTimeout(autoClose);
+        }
+    }, { once: true });
+}
+
 function openInvite(meeting=null){const selected=selectedBuddy();if(!meeting&&!selected){notify('请先打开一位搭子的聊天');return;}campus.formMeeting=meeting;$('meetupForm').reset();$('inviteSport').value=meeting?.exercise_type||selected?.topic.split(' · ')[0]||'羽毛球';$('inviteSport').disabled=!!meeting;const d=meeting?new Date(meeting.starts_at):new Date(Date.now()+86400000);$('inviteTime').value=`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;$('inviteDuration').value=String(meeting?.duration||60);$('invitePlace').value=meeting?.location||selected?.topic.split(' · ').slice(1).join(' · ')||'';$('meetupFormTitle').textContent=meeting?'提出新的时间和地点':'发出运动邀请';$('inviteSubmit').textContent=meeting?'发送改约提议':'发送邀请';$('inviteMsg').textContent='';$('meetupFormDialog').showModal();}
 async function submitInvite(){await busy($('inviteSubmit'),async()=>{const epoch=state.epoch,m=campus.formMeeting,payload={starts_at:new Date($('inviteTime').value).toISOString(),duration:Number($('inviteDuration').value),location:$('invitePlace').value.trim()};if(m)payload.revision=m.revision;else Object.assign(payload,{chat_id:buddy.chatId,exercise_type:$('inviteSport').value.trim()});const result=await withConflict(m?`/api/meetups/${m.id}/change`:'/api/meetups',payload);if(epoch!==state.epoch)return;$('meetupFormDialog').close();await refreshMeetingResult(result);notify(m?'改约提议已发出，等待同伴确认':'运动邀请已发出');},'inviteMsg');}
 function openReport(data,name){campus.report=data;$('reportForm').reset();$('reportTarget').textContent=`举报对象：${name}`;$('reportMsg').textContent='';$('reportDialog').showModal();}
