@@ -146,7 +146,8 @@ function showBoatJoinAnimation(meeting,result){
     <p class="boat-join-names">${names.slice(0,5).map(escapeHTML).join(' · ')}</p>
     <button type="button" class="boat-confirm">太棒了</button>
   </div>`;
-  document.body.appendChild(overlay);
+  // 添加到页面最外层，避免被页面内容容器裁剪
+  document.documentElement.appendChild(overlay);
   const close=()=>{overlay.classList.add('boat-leaving');setTimeout(()=>overlay.remove(),220);};
   overlay.querySelector('.boat-close').addEventListener('click',close);
   overlay.querySelector('.boat-confirm').addEventListener('click',close);
