@@ -1882,3 +1882,381 @@ dialog .change-proposal {
         transition: none !important;
     }
 }
+
+/* =========================================
+   循动全站卡片图标增强版
+   针对项目真实 HTML 类名编写
+   ========================================= */
+
+/* 1. 找搭子：活动卡片 */
+
+#homeActivityList .campus-activity,
+#buddyDiscoverPanel .campus-activity {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e8e7d9 !important;
+    border-radius: 23px !important;
+    background: linear-gradient(145deg, #fffefa, #f5f8ef) !important;
+    box-shadow: 0 7px 22px rgba(63, 93, 65, .09) !important;
+}
+
+.campus-activity .activity-title h3::before {
+    content: "🏅";
+    display: inline-grid;
+    place-items: center;
+    width: 35px;
+    height: 35px;
+    margin-right: 9px;
+    border-radius: 11px;
+    background: #fff0dc;
+    font-size: 19px;
+    vertical-align: middle;
+}
+
+.campus-activity .activity-when::before {
+    content: "🗓️";
+    margin-right: 9px;
+    font-size: 16px;
+}
+
+.campus-activity .activity-place::before {
+    content: "📍";
+    margin-right: 7px;
+    font-size: 16px;
+}
+
+.campus-activity .activity-tags span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    margin: 4px;
+    border-radius: 20px;
+    background: #edf4e9;
+    color: #587b56;
+    font-size: 12px;
+}
+
+.campus-activity .activity-tags span:first-child::before {
+    content: "✨";
+}
+
+.campus-activity .activity-host {
+    padding: 13px;
+    margin-top: 13px;
+    border-radius: 15px;
+    background: #fff6e9;
+}
+
+.campus-activity .activity-host button {
+    border-radius: 12px;
+    background: #e7f1e3;
+    color: #39724c;
+    padding: 8px 13px;
+    font-weight: 700;
+}
+
+/* 2. 我的运动约定 */
+
+.meetup-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px !important;
+    border: 1px solid #eadfce !important;
+    background:
+        radial-gradient(circle at 95% 5%, #fff0d9, transparent 25%),
+        linear-gradient(140deg, #fffefa, #f9f6ed) !important;
+    box-shadow: 0 8px 23px rgba(83, 76, 60, .09) !important;
+}
+
+.meetup-card h2::before {
+    content: "🏸";
+    display: inline-grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    margin-right: 12px;
+    border-radius: 14px;
+    background: #eaf3e7;
+    font-size: 24px;
+    vertical-align: middle;
+}
+
+.meetup-card .buddy-date::before {
+    content: "📅";
+    margin-right: 9px;
+}
+
+.meetup-card .record-detail {
+    display: inline-block;
+    padding: 9px 13px;
+    border-radius: 12px;
+    background: #eaf3e7;
+    color: #537d59;
+}
+
+.meetup-card .record-detail::before {
+    content: "📍 ";
+}
+
+.meetup-card > .fine {
+    padding: 12px 14px;
+    border-radius: 13px;
+    background: #f1ebf8;
+    color: #78648c;
+}
+
+.meetup-card > .fine::before {
+    content: "👥 ";
+}
+
+.meetup-card .actions {
+    padding-top: 15px;
+    border-top: 1px dashed #e7ddce;
+}
+
+/* 3. 运动记录统计 */
+
+#page-records .metric {
+    position: relative;
+    overflow: hidden;
+    min-height: 135px;
+    padding: 19px !important;
+    border-radius: 21px !important;
+    box-shadow: 0 7px 19px rgba(70, 88, 65, .08);
+}
+
+#page-records .metric:nth-child(1) {
+    background: linear-gradient(140deg, #e5f2e5, #fffefa) !important;
+}
+
+#page-records .metric:nth-child(2) {
+    background: linear-gradient(140deg, #fff0dc, #fffefa) !important;
+}
+
+#page-records .metric:nth-child(3) {
+    background: linear-gradient(140deg, #eee8f8, #fffefa) !important;
+}
+
+#page-records .metric:nth-child(1) > span:first-child::before {
+    content: "⏱️";
+}
+
+#page-records .metric:nth-child(2) > span:first-child::before {
+    content: "🔥";
+}
+
+#page-records .metric:nth-child(3) > span:first-child::before {
+    content: "⚡";
+}
+
+#page-records .metric > span:first-child::before {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 19px;
+    vertical-align: middle;
+}
+
+#page-records .metric b {
+    font-size: 32px;
+    color: #315d43;
+    font-weight: 850;
+}
+
+#page-records .metric .metric-foot::before {
+    content: "✦ ";
+    color: #d49b52;
+}
+
+/* 4. 运动趋势图表 */
+
+#page-records .chart-card {
+    border-radius: 22px !important;
+    background: linear-gradient(145deg, #fffefa, #f0f5ed) !important;
+}
+
+#page-records .chart-card h2::before {
+    content: "📈";
+    margin-right: 10px;
+    font-size: 22px;
+}
+
+.record-insights > summary::before {
+    content: "🌱";
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-right: 10px;
+    border-radius: 11px;
+    background: #dcebd8;
+    vertical-align: middle;
+}
+
+/* 5. 个人主页运动数据 */
+
+#page-profile .profile-progress {
+    border-radius: 23px !important;
+    background: linear-gradient(135deg, #e8f3e5, #fff7e9) !important;
+}
+
+#page-profile .profile-metrics > div {
+    position: relative;
+    padding: 16px 10px;
+    border-radius: 17px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid #e4e8dc;
+    text-align: center;
+}
+
+#page-profile .profile-metrics > div:nth-child(1)::before {
+    content: "⏱️";
+}
+
+#page-profile .profile-metrics > div:nth-child(2)::before {
+    content: "🏃";
+}
+
+#page-profile .profile-metrics > div:nth-child(3)::before {
+    content: "🏆";
+}
+
+#page-profile .profile-metrics > div::before {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 25px;
+}
+
+#page-profile .profile-metrics strong {
+    display: block;
+    color: #39744c;
+    font-size: 27px;
+}
+
+/* 6. 个人主页快捷入口 */
+
+#page-profile .profile-quick-links button {
+    position: relative;
+    overflow: hidden;
+    border-radius: 19px !important;
+    border: 1px solid #e9e5d8;
+    background: linear-gradient(140deg, #fffefa, #edf4e8);
+    box-shadow: 0 5px 15px rgba(70, 88, 65, .07);
+}
+
+#page-profile .profile-quick-links button:nth-child(1) span:first-child {
+    background: #fff0dc;
+}
+
+#page-profile .profile-quick-links button:nth-child(2) span:first-child {
+    background: #e6f2e3;
+}
+
+#page-profile .profile-quick-links button:nth-child(3) span:first-child {
+    background: #eee8f8;
+}
+
+#page-profile .profile-quick-links button span:first-child {
+    display: inline-grid;
+    place-items: center;
+    width: 39px;
+    height: 39px;
+    margin-right: 8px;
+    border-radius: 13px;
+    font-size: 21px;
+}
+
+/* 7. 最近常玩项目 */
+
+#page-profile .profile-section:nth-of-type(3) h2::before {
+    content: "🎯";
+    margin-right: 9px;
+}
+
+#page-profile .profile-section:nth-of-type(4) h2::before {
+    content: "👣";
+    margin-right: 9px;
+}
+
+/* 8. 消息列表 */
+
+#page-buddies .buddy-chat-list > * {
+    border-radius: 19px !important;
+    border: 1px solid #eee6dc;
+    background: linear-gradient(135deg, #fffefa, #f3f6ee);
+    box-shadow: 0 5px 15px rgba(70, 88, 65, .06);
+}
+
+#page-buddies .pinned-meetup {
+    padding: 13px;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #eaf3e7, #fff1df);
+    border: 1px solid #e7e7d9;
+}
+
+#page-buddies .pinned-meetup::before {
+    content: "📌 今日约定";
+    display: block;
+    margin-bottom: 10px;
+    color: #64815d;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* 9. 首页运动周报 */
+
+.home-record-link {
+    position: relative;
+    padding: 20px 20px 20px 60px !important;
+    border-radius: 21px !important;
+    background: linear-gradient(120deg, #e8f2e5, #fff3e3) !important;
+    border: 1px solid #e8e7d9;
+}
+
+.home-record-link::before {
+    content: "📊";
+    position: absolute;
+    left: 17px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 29px;
+}
+
+/* 10. 首页发起邀请 */
+
+.home-own-link {
+    position: relative;
+    padding: 17px 17px 17px 55px !important;
+    border-radius: 19px;
+    background: #f1ebf8;
+}
+
+.home-own-link::before {
+    content: "🤝";
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 27px;
+}
+
+/* 11. 手机端 */
+
+@media (max-width: 640px) {
+    .meetup-card h2::before {
+        width: 37px;
+        height: 37px;
+        font-size: 21px;
+    }
+
+    .campus-activity .activity-title h3::before {
+        width: 30px;
+        height: 30px;
+        font-size: 17px;
+    }
+
+    #page-records .metric {
+        min-height: 115px;
+        padding: 14px !important;
+    }
+}
