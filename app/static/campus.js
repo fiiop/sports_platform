@@ -102,6 +102,25 @@ function showBoatJoinAnimation(meeting,result){
   const overlay=document.createElement('div');
   overlay.id='boatJoinOverlay';
   overlay.className='boat-join-overlay';
+
+ // 移动端显示兜底：不依赖外部 CSS 是否成功加载
+  overlay.style.cssText = `
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  z-index: 2147483647 !important;
+  display: grid !important;
+  place-items: center !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
+  background: rgba(20,39,32,.68) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+`;
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-label','加入运动小船');
