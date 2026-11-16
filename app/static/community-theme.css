@@ -1,0 +1,1359 @@
+
+/* =====================================================
+   循动 Campus Move - 校园社区统一视觉主题
+   适用：找搭子 / 记录 / 消息 / 我的 / 登录注册
+   不修改原有业务逻辑
+   ===================================================== */
+
+:root {
+    --community-green: #17634d;
+    --community-green-light: #e8f2e7;
+    --community-orange: #efa052;
+    --community-yellow: #f5cf72;
+    --community-pink: #f5dede;
+    --community-purple: #eee8fa;
+    --community-blue: #e5eff9;
+    --community-cream: #fffaf0;
+    --community-shadow: 0 10px 28px rgba(38, 76, 51, .09);
+}
+
+/* =========================
+   1. 全局页面氛围
+   ========================= */
+
+#page-buddies,
+#page-records,
+#page-profile {
+    animation: community-enter .35s ease both;
+}
+
+@keyframes community-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-heading h1,
+.profile-page-heading h1 {
+    color: #204b38;
+    font-weight: 850;
+    letter-spacing: -.8px;
+}
+
+.page-heading .eyebrow,
+.profile-page-heading .eyebrow {
+    color: #b17a43;
+    font-weight: 750;
+    letter-spacing: 1px;
+}
+
+/* 页面标题增加彩色图标徽章 */
+
+#page-buddies .buddy-page-heading h1::before,
+#page-records > .page-heading h1::before,
+.messages-title h1::before,
+.profile-page-heading h1::before {
+    display: inline-grid;
+    place-items: center;
+    width: 39px;
+    height: 39px;
+    margin-right: 11px;
+    border-radius: 14px;
+    vertical-align: middle;
+    font-size: 21px;
+    letter-spacing: 0;
+}
+
+#page-buddies .buddy-page-heading h1::before {
+    content: "🏸";
+    background: #fff0d9;
+}
+
+#page-records > .page-heading h1::before {
+    content: "🏃";
+    background: #e5f2e8;
+}
+
+.messages-title h1::before {
+    content: "💬";
+    background: #f0eafa;
+}
+
+.profile-page-heading h1::before {
+    content: "🌻";
+    background: #fff0d9;
+}
+
+/* =========================
+   2. 找搭子页面
+   ========================= */
+
+.buddy-page-heading {
+    padding: 24px 25px;
+    border-radius: 25px;
+    background:
+        radial-gradient(circle at 90% 15%, #ffe8c8 0, transparent 27%),
+        linear-gradient(115deg, #eaf4e8, #fffaf0);
+    border: 1px solid #e6ebdc;
+    box-shadow: var(--community-shadow);
+}
+
+.buddy-page-heading h1 {
+    margin-top: 9px;
+    font-size: clamp(25px, 3vw, 34px);
+}
+
+.buddy-page-heading p {
+    color: #718477;
+    margin-top: 9px;
+}
+
+.buddy-page-heading > button {
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+    box-shadow: 0 7px 17px rgba(23, 99, 77, .2);
+}
+
+/* 搭子分类导航 */
+
+.buddy-tabs {
+    padding: 7px;
+    gap: 8px;
+    border-radius: 20px;
+    background: #e9efe5;
+}
+
+.buddy-tabs button {
+    min-height: 45px;
+    border-radius: 15px;
+    font-weight: 650;
+    transition: .2s ease;
+}
+
+.buddy-tabs button:nth-child(1)::before {
+    content: "🔍 ";
+}
+
+.buddy-tabs button:nth-child(2)::before {
+    content: "📅 ";
+}
+
+.buddy-tabs button:nth-child(3)::before {
+    content: "🌱 ";
+}
+
+.buddy-tabs button.active {
+    background: linear-gradient(120deg, #fffefa, #f3f7eb);
+    color: #17634d;
+    box-shadow: 0 4px 12px rgba(38, 76, 51, .1);
+}
+
+/* 搭子发现区域 */
+
+#buddyDiscoverPanel,
+#buddyMinePanel {
+    padding: 24px;
+    border-radius: 26px;
+    background: #fffefa;
+    border: 1px solid #e8eadd;
+    box-shadow: var(--community-shadow);
+}
+
+.discovery-filters {
+    padding: 15px;
+    border-radius: 19px;
+    background: #f6f7ef;
+}
+
+.sport-search input {
+    border-radius: 15px !important;
+    background: #fffefa;
+}
+
+#buddyFilterApply {
+    background: linear-gradient(120deg, #17634d, #328b66);
+    border-radius: 14px;
+}
+
+#openBuddyFilters {
+    border-radius: 14px;
+    background: #fff0dc;
+    color: #a56d32;
+}
+
+/* 运动筛选标签 */
+
+.filter-chips {
+    gap: 10px;
+    margin: 16px 0 20px;
+}
+
+.filter-chips button {
+    border-radius: 999px;
+    padding: 9px 16px;
+    background: #edf4e9;
+    color: #35684d;
+    border: 1px solid transparent;
+    font-weight: 650;
+    transition: .2s ease;
+}
+
+.filter-chips button:nth-child(2) {
+    background: #fff0dc;
+    color: #a66c32;
+}
+
+.filter-chips button:nth-child(3) {
+    background: #fce8dc;
+    color: #b66d43;
+}
+
+.filter-chips button:nth-child(4) {
+    background: #e5f2e8;
+    color: #397653;
+}
+
+.filter-chips button:nth-child(5) {
+    background: #eee9fa;
+    color: #7963a8;
+}
+
+.filter-chips button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(38, 76, 51, .09);
+}
+
+/* 搭子活动卡片 */
+
+.buddy-status-grid .campus-activity {
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fffefa;
+    border: 1px solid #e9eadf;
+    box-shadow: 0 8px 24px rgba(38, 76, 51, .07);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.buddy-status-grid .campus-activity:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(38, 76, 51, .13);
+}
+
+.activity-cover {
+    border-radius: 20px 20px 0 0;
+}
+
+.activity-sport {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #fff0dc;
+    color: #a66d34;
+    font-weight: 700;
+}
+
+.activity-title h3 {
+    color: #244b39;
+    font-weight: 800;
+}
+
+.activity-host {
+    border-top: 1px solid #f0eee6;
+}
+
+/* 列表与地图切换 */
+
+.buddy-view-switch {
+    padding: 4px;
+    border-radius: 15px;
+    background: #edf3e9;
+}
+
+.buddy-view-switch button {
+    border-radius: 12px;
+}
+
+.buddy-view-switch button.active {
+    background: #17634d;
+    color: white;
+    box-shadow: 0 4px 12px #17634d25;
+}
+
+/* 发布运动状态 */
+
+.publish-heading {
+    padding: 18px;
+    border-radius: 19px;
+    background: linear-gradient(120deg, #edf5e9, #fff2df);
+    margin-bottom: 18px;
+}
+
+.publish-heading h2 {
+    color: #24523c;
+    font-weight: 800;
+}
+
+.publish-submit-bar {
+    padding: 17px;
+    border-radius: 19px;
+    background: #f4f6ed;
+}
+
+#buddyPublish {
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+    box-shadow: 0 7px 18px #17634d25;
+}
+
+/* =========================
+   3. 运动记录页面
+   ========================= */
+
+#page-records > .page-heading {
+    padding: 23px 25px;
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 90% 10%, #ffe7ca 0, transparent 26%),
+        linear-gradient(120deg, #eaf4e8, #fffaf0);
+    border: 1px solid #e7eadf;
+    box-shadow: var(--community-shadow);
+    margin-bottom: 23px;
+}
+
+#page-records > .card {
+    border-radius: 25px;
+    border: 1px solid #e9eadf;
+    box-shadow: var(--community-shadow);
+    margin-bottom: 20px;
+    background: #fffefa;
+}
+
+/* 记录表单标题 */
+
+#recordFormTitle::before {
+    content: "✨";
+    display: inline-grid;
+    place-items: center;
+    width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    border-radius: 12px;
+    background: #fff0d9;
+    font-size: 18px;
+    vertical-align: middle;
+}
+
+/* 常用运动项目 */
+
+#page-records .quick-picks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 12px 0 18px;
+}
+
+#page-records .quick-picks .chip {
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #eaf3e7;
+    color: #326a4b;
+    border: 1px solid transparent;
+    font-weight: 650;
+    transition: .2s ease;
+}
+
+#page-records .quick-picks .chip:nth-child(2) {
+    background: #fff0dc;
+    color: #a46b34;
+}
+
+#page-records .quick-picks .chip:nth-child(3) {
+    background: #fce9df;
+    color: #b66e44;
+}
+
+#page-records .quick-picks .chip:nth-child(4) {
+    background: #e8eff9;
+    color: #5376a0;
+}
+
+#page-records .quick-picks .chip:nth-child(5) {
+    background: #eee9fa;
+    color: #7863a6;
+}
+
+#page-records .quick-picks .chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(38, 76, 51, .1);
+}
+
+/* 快捷时长按钮 */
+
+#page-records [data-duration] {
+    background: #fff1dc;
+    color: #a46b34;
+}
+
+/* 保存记录按钮 */
+
+#recordSubmit {
+    min-height: 47px;
+    padding: 11px 25px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+    box-shadow: 0 7px 17px #17634d25;
+    font-weight: 750;
+}
+
+/* 记录列表 */
+
+#records {
+    display: grid;
+    gap: 10px;
+}
+
+.record-list > * {
+    border-radius: 17px;
+}
+
+#page-records .record-list > * {
+    transition: background .2s ease;
+}
+
+#page-records .record-list > *:hover {
+    background: #f6f7ef;
+}
+
+/* 运动趋势折叠区 */
+
+.record-insights {
+    border-radius: 25px;
+    background: #fffefa;
+    border: 1px solid #e8eadf;
+    box-shadow: var(--community-shadow);
+    padding: 18px 22px;
+}
+
+.record-insights > summary {
+    padding: 12px;
+    border-radius: 16px;
+    background: linear-gradient(110deg, #edf5e9, #fff2df);
+    color: #28553e;
+    font-weight: 750;
+}
+
+.record-insights > summary small {
+    color: #8a927f;
+}
+
+/* 统计数据卡片 */
+
+#page-records .metrics {
+    gap: 13px;
+}
+
+#page-records .metric {
+    border-radius: 22px;
+    padding: 20px;
+    border: 1px solid #e8eadf;
+    box-shadow: 0 6px 18px rgba(38, 76, 51, .06);
+}
+
+#page-records .metric:nth-child(1) {
+    background: linear-gradient(145deg, #e8f3e7, #fffefa);
+}
+
+#page-records .metric:nth-child(2) {
+    background: linear-gradient(145deg, #fff0dc, #fffefa);
+}
+
+#page-records .metric:nth-child(3) {
+    background: linear-gradient(145deg, #eee9fa, #fffefa);
+}
+
+#page-records .metric b {
+    color: #245b40;
+    font-weight: 850;
+}
+
+/* 图表卡片 */
+
+#page-records .chart-card {
+    border-radius: 23px;
+    background: linear-gradient(145deg, #fffefa, #f1f6ec);
+}
+
+/* =========================
+   4. 消息页面
+   ========================= */
+
+#buddyMessagesPanel {
+    border-radius: 26px;
+    padding: 24px;
+    background: #fffefa;
+    border: 1px solid #e8eadf;
+    box-shadow: var(--community-shadow);
+}
+
+/* 消息头部 */
+
+.messages-header {
+    padding: 12px;
+    border-radius: 21px;
+    background: linear-gradient(110deg, #edf4e9, #fff1df);
+    margin-bottom: 22px;
+}
+
+.messages-title h1 {
+    color: #24513b;
+    font-weight: 850;
+}
+
+.messages-title p {
+    color: #829080;
+}
+
+.messages-self,
+.messages-self .chat-avatar {
+    border-radius: 18px;
+}
+
+/* 消息工具入口 */
+
+.message-utilities {
+    gap: 10px;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+}
+
+.message-utilities details {
+    border: 1px solid #e9eadf;
+    border-radius: 17px;
+    background: #fffefa;
+    box-shadow: 0 5px 15px rgba(38, 76, 51, .05);
+    overflow: hidden;
+}
+
+.message-utilities details:first-child {
+    background: linear-gradient(145deg, #fff3df, #fffefa);
+}
+
+.message-utilities details:nth-child(2) {
+    background: linear-gradient(145deg, #eaf3e9, #fffefa);
+}
+
+.message-utilities details > summary {
+    min-height: 59px;
+    padding: 14px;
+    border-radius: 17px;
+    font-weight: 700;
+}
+
+.utility-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: #ffffffb8;
+    color: #317452;
+}
+
+.utility-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+/* 消息分组标题 */
+
+.message-section-heading {
+    padding: 9px 4px;
+    border-bottom: 1px solid #eeeee5;
+}
+
+.message-section-label {
+    color: #315940;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+#messageGroupHeading::before {
+    content: "👥 ";
+}
+
+.message-section-heading .message-section-label::before {
+    content: "💌 ";
+}
+
+/* 聊天列表 */
+
+.buddy-chat-list {
+    gap: 10px;
+}
+
+.buddy-chat-list > * {
+    border-radius: 18px;
+    border: 1px solid #edeee5;
+    background: #fffefa;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.buddy-chat-list > *:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 19px rgba(38, 76, 51, .08);
+}
+
+.chat-list-avatar,
+.chat-heading-avatar {
+    border-radius: 17px;
+}
+
+/* 聊天气泡 */
+
+.message-bubble {
+    border-radius: 17px 17px 17px 5px;
+    background: #edf4e9;
+    border: 0;
+    box-shadow: 0 3px 8px rgba(38, 76, 51, .05);
+}
+
+.message-bubble.own,
+.message-bubble.is-own {
+    background: linear-gradient(120deg, #dcefd9, #e9f5df);
+    border-radius: 17px 17px 5px 17px;
+}
+
+/* 聊天窗口 */
+
+.buddy-conversation {
+    border-radius: 23px;
+    overflow: hidden;
+    background: #fffefa;
+}
+
+.buddy-chat-heading {
+    background: linear-gradient(110deg, #edf5e9, #fff3e2);
+    border-radius: 18px 18px 0 0;
+}
+
+.conversation-context {
+    background: #f7f6ed;
+    border-radius: 14px;
+    padding: 11px 14px;
+}
+
+#buddyInvite {
+    background: #fff0d9;
+    color: #9e6935;
+    border-radius: 999px;
+}
+
+/* 消息输入 */
+
+#buddyMessageForm {
+    padding: 10px;
+    border-radius: 18px;
+    background: #f4f6ef;
+}
+
+#buddyMessageForm textarea {
+    border-radius: 15px !important;
+    background: #fffefa;
+}
+
+#buddySend {
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+}
+
+/* =========================
+   5. 我的页面
+   ========================= */
+
+.profile-page-heading {
+    padding: 21px 24px;
+    border-radius: 23px;
+    background:
+        radial-gradient(circle at 90% 10%, #ffe8cb 0, transparent 28%),
+        linear-gradient(115deg, #e9f3e6, #fffaf0);
+    border: 1px solid #e8eadf;
+    box-shadow: var(--community-shadow);
+}
+
+.profile-page-heading h1 {
+    font-size: 29px;
+}
+
+.profile-settings-button {
+    width: 48px;
+    height: 48px;
+    background: #fff0dc;
+    border: 0;
+    color: #a46b34;
+    box-shadow: 0 5px 14px rgba(166, 107, 52, .12);
+}
+
+.profile-settings-button svg {
+    width: 23px;
+    height: 23px;
+}
+
+/* 个人资料卡 */
+
+.profile-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 27px;
+    border-radius: 27px;
+    background:
+        radial-gradient(circle at 95% 0%, #fff0d8 0, transparent 32%),
+        linear-gradient(130deg, #eaf4e8, #fffefa 75%);
+    border: 1px solid #e5eadf;
+    box-shadow: var(--community-shadow);
+}
+
+.profile-hero::after {
+    content: "✦";
+    position: absolute;
+    top: 14px;
+    right: 24px;
+    font-size: 33px;
+    color: #e7ae5e;
+    opacity: .8;
+    pointer-events: none;
+}
+
+.profile-identity-row .identity-avatar {
+    border: 4px solid #fffefa;
+    box-shadow: 0 6px 17px rgba(38, 76, 51, .14);
+    border-radius: 25px;
+}
+
+.profile-campus-label {
+    color: #b37a43;
+    font-weight: 700;
+}
+
+.identity-heading h2 {
+    color: #244e39;
+    font-weight: 850;
+}
+
+.profile-edit-button {
+    border-radius: 999px;
+    background: #fff0dc;
+    color: #a66e34;
+    font-weight: 700;
+}
+
+/* 个人运动简介 */
+
+.profile-bio {
+    padding: 13px 16px;
+    border-radius: 16px;
+    background: #ffffffa8;
+    color: #627769;
+}
+
+/* 运动数据 */
+
+.profile-progress {
+    padding: 24px;
+    border-radius: 25px;
+    background: linear-gradient(120deg, #e7f2e5, #f7f7e9);
+    border: 1px solid #e1eadc;
+    box-shadow: var(--community-shadow);
+}
+
+.profile-progress h2 {
+    color: #28543e;
+    font-weight: 800;
+}
+
+.profile-metrics > div {
+    padding: 13px;
+    border-radius: 17px;
+    background: #ffffffa6;
+    border: 1px solid #ffffff;
+}
+
+.profile-metrics > div + div {
+    border-left: 0;
+}
+
+.profile-metrics strong {
+    color: #216247;
+    font-weight: 850;
+}
+
+.profile-metrics span {
+    color: #849080;
+}
+
+/* 我的功能快捷入口 */
+
+.profile-quick-links {
+    gap: 12px;
+}
+
+.profile-quick-links button {
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+    padding: 17px;
+    border-radius: 22px;
+    border: 1px solid #e9eadf;
+    box-shadow: 0 7px 19px rgba(38, 76, 51, .06);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.profile-quick-links button:nth-child(1) {
+    background: linear-gradient(145deg, #fff0dc, #fffefa);
+}
+
+.profile-quick-links button:nth-child(2) {
+    background: linear-gradient(145deg, #e8f2e7, #fffefa);
+}
+
+.profile-quick-links button:nth-child(3) {
+    background: linear-gradient(145deg, #eee9fa, #fffefa);
+}
+
+.profile-quick-links button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(38, 76, 51, .11);
+}
+
+.profile-quick-links button > span {
+    width: 39px;
+    height: 39px;
+    border-radius: 14px;
+    background: #ffffffc9;
+    font-size: 21px;
+    box-shadow: 0 3px 8px rgba(38, 76, 51, .06);
+}
+
+.profile-quick-links button:nth-child(1) > span::before {
+    content: "📅";
+}
+
+.profile-quick-links button:nth-child(2) > span::before {
+    content: "🎯";
+}
+
+.profile-quick-links button:nth-child(3) > span::before {
+    content: "✍️";
+}
+
+/* 我的常用运动标签 */
+
+.profile-sports > span {
+    padding: 11px 16px;
+    border-radius: 999px;
+    background: #fff0dc;
+    color: #98652f;
+    border: 1px solid #f5e6ce;
+}
+
+.profile-sports > span:nth-child(2n) {
+    background: #eaf3e8;
+    color: #326d4d;
+    border-color: #e0ebdf;
+}
+
+/* 最近运动足迹 */
+
+#profileRecentRecords {
+    padding: 5px 18px;
+    border-radius: 22px;
+    background: #fffefa;
+    box-shadow: 0 7px 20px rgba(38, 76, 51, .06);
+}
+
+.profile-record-icon {
+    border-radius: 15px;
+    background: #fff0dc;
+    color: #b47a3e;
+}
+
+.profile-invite-link {
+    border-radius: 23px;
+    padding: 23px;
+    background: linear-gradient(115deg, #e7f2e5, #fff0dc);
+    box-shadow: 0 7px 20px rgba(38, 76, 51, .06);
+}
+
+/* =========================
+   6. 登录与注册页面
+   ========================= */
+
+.auth-wrap {
+    position: relative;
+    isolation: isolate;
+    gap: 45px;
+    max-width: 1120px;
+    padding: 45px 25px;
+}
+
+.auth-story {
+    position: relative;
+    overflow: hidden;
+    padding: 35px;
+    border-radius: 32px;
+    background:
+        radial-gradient(circle at 82% 17%, #ffe7bf 0, transparent 22%),
+        radial-gradient(circle at 15% 90%, #cde6c9 0, transparent 34%),
+        linear-gradient(135deg, #e7f2e4, #fff8e9);
+    box-shadow: 0 13px 35px rgba(38, 76, 51, .09);
+}
+
+.auth-story .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #ffffffbd;
+    color: #a36e37;
+    font-weight: 750;
+}
+
+.auth-story h1 {
+    position: relative;
+    z-index: 1;
+    color: #20513a;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+    line-height: 1.4;
+}
+
+.auth-story > p {
+    color: #6d8172;
+    line-height: 2;
+}
+
+/* 登录页面三步介绍 */
+
+.story-track {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.story-track span {
+    padding: 9px 13px;
+    border-radius: 999px;
+    background: #ffffffb8;
+    color: #477153;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* 登录页插画区域 */
+
+.orbit {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 190px;
+    height: 190px;
+    margin: 28px auto 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff8e9 0 38%, #dcebd6 39% 60%, #c9e2c9 61%);
+    box-shadow: 0 12px 30px rgba(39, 99, 70, .1);
+}
+
+.orbit::before,
+.orbit::after {
+    content: "";
+    position: absolute;
+    border: 2px dashed #8cb99a;
+    border-radius: 50%;
+}
+
+.orbit::before {
+    inset: 12px;
+}
+
+.orbit::after {
+    inset: -12px;
+    border-color: #e5ae68;
+    opacity: .6;
+}
+
+.story-runners {
+    width: 95px;
+    height: 95px;
+    fill: none;
+    stroke: #287454;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: scale(1.5);
+}
+
+/* 登录表单卡片 */
+
+.auth-card {
+    align-self: center;
+    padding: 36px;
+    border-radius: 29px;
+    background: #fffefa;
+    border: 1px solid #e8eadf;
+    box-shadow: 0 15px 40px rgba(38, 76, 51, .1);
+}
+
+.auth-card > .eyebrow {
+    display: inline-flex;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: #fff0dc;
+    color: #a76e35;
+    font-weight: 750;
+}
+
+.auth-card h2 {
+    margin-top: 17px;
+    color: #244e39;
+    font-size: 26px;
+    font-weight: 850;
+}
+
+.auth-card > .muted {
+    color: #829083;
+    line-height: 1.9;
+}
+
+.auth-card form {
+    margin-top: 24px;
+}
+
+.auth-card form label {
+    color: #496653;
+    font-weight: 700;
+}
+
+.auth-card input {
+    min-height: 49px;
+    border-radius: 15px !important;
+    background: #fafbf6;
+}
+
+.auth-card input:focus {
+    background: white;
+}
+
+.auth-card form .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 23px;
+}
+
+.auth-card form .actions button:first-child {
+    flex: 1;
+    min-height: 49px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+    box-shadow: 0 8px 19px rgba(23, 99, 77, .22);
+}
+
+.auth-card form .actions .ghost {
+    border-radius: 999px;
+    background: #fff0dc;
+    color: #a66d34;
+}
+
+.auth-card .fine {
+    color: #929a89;
+}
+
+/* =========================
+   7. 主导航图标
+   ========================= */
+
+.nav-item {
+    border-radius: 19px;
+    transition: transform .2s ease, background .2s ease;
+}
+
+.nav-item:hover {
+    transform: translateX(3px);
+}
+
+.nav-item .nav-icon {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border-radius: 10px;
+    background: #edf3e9;
+    color: #43805d;
+    transition: .2s ease;
+}
+
+.nav-item:nth-child(2) .nav-icon {
+    background: #fff0dc;
+    color: #bd813e;
+}
+
+.nav-item:nth-child(3) .nav-icon {
+    background: #e8f2e7;
+    color: #39805a;
+}
+
+.nav-item:nth-child(4) .nav-icon {
+    background: #eee9fa;
+    color: #8069b2;
+}
+
+.nav-item:nth-child(5) .nav-icon {
+    background: #fce9df;
+    color: #b87550;
+}
+
+.nav-item.active .nav-icon {
+    background: #ffffff2c;
+    color: white;
+}
+
+/* =========================
+   8. 对话框统一风格
+   ========================= */
+
+dialog {
+    border: 1px solid #e8eadf;
+    border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(30, 57, 39, .2);
+}
+
+dialog h2 {
+    color: #24513b;
+    font-weight: 850;
+}
+
+dialog .actions button:first-child {
+    border-radius: 999px;
+    background: linear-gradient(120deg, #17634d, #328b66);
+}
+
+/* =========================
+   9. 暗色主题适配
+   ========================= */
+
+:root[data-theme="night"] .buddy-page-heading,
+:root[data-theme="night"] #page-records > .page-heading,
+:root[data-theme="night"] .profile-page-heading {
+    background: linear-gradient(120deg, #243d30, #3d382b);
+    border-color: #405444;
+}
+
+:root[data-theme="night"] .buddy-page-heading h1,
+:root[data-theme="night"] #page-records .page-heading h1,
+:root[data-theme="night"] .profile-page-heading h1,
+:root[data-theme="night"] .identity-heading h2,
+:root[data-theme="night"] .messages-title h1 {
+    color: #e5f0e3;
+}
+
+:root[data-theme="night"] #buddyDiscoverPanel,
+:root[data-theme="night"] #buddyMinePanel,
+:root[data-theme="night"] #buddyMessagesPanel,
+:root[data-theme="night"] #page-records > .card {
+    background: #20372c;
+    border-color: #3c5142;
+}
+
+:root[data-theme="night"] .profile-hero {
+    background: linear-gradient(130deg, #263e31, #344133);
+    border-color: #405444;
+}
+
+:root[data-theme="night"] .profile-progress {
+    background: linear-gradient(120deg, #263e31, #3c4031);
+}
+
+:root[data-theme="night"] .auth-story {
+    background: linear-gradient(135deg, #263e31, #403b2e);
+}
+
+:root[data-theme="night"] .auth-story h1,
+:root[data-theme="night"] .auth-card h2 {
+    color: #e5f0e3;
+}
+
+:root[data-theme="night"] .auth-card {
+    background: #20372c;
+    border-color: #405444;
+}
+
+:root[data-theme="night"] .auth-card > .muted,
+:root[data-theme="night"] .auth-story > p {
+    color: #b2c1b2;
+}
+
+/* =========================
+   10. 手机端布局
+   ========================= */
+
+@media (max-width: 760px) {
+
+    .buddy-page-heading {
+        padding: 19px;
+        border-radius: 21px;
+    }
+
+    #buddyDiscoverPanel,
+    #buddyMinePanel,
+    #buddyMessagesPanel {
+        padding: 15px;
+        border-radius: 21px;
+    }
+
+    #page-records > .page-heading {
+        padding: 18px;
+        border-radius: 21px;
+    }
+
+    #page-records > .card {
+        padding: 19px 15px;
+    }
+
+    #page-records .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    #page-records .metric {
+        min-height: 110px;
+    }
+
+    .message-utilities {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .profile-page-heading {
+        padding: 17px;
+        border-radius: 20px;
+    }
+
+    .profile-hero {
+        padding: 20px;
+    }
+
+    .profile-quick-links {
+        gap: 8px;
+    }
+
+    .profile-quick-links button {
+        min-height: 108px;
+        padding: 12px 9px;
+    }
+
+    .auth-wrap {
+        padding: 18px;
+        gap: 18px;
+    }
+
+    .auth-story {
+        padding: 23px;
+        border-radius: 24px;
+    }
+
+    .auth-story h1 {
+        font-size: 35px;
+    }
+
+    .orbit {
+        width: 135px;
+        height: 135px;
+        margin-top: 22px;
+    }
+
+    .auth-card {
+        padding: 25px 20px;
+        border-radius: 24px;
+    }
+}
+
+@media (max-width: 420px) {
+    .buddy-tabs {
+        gap: 3px;
+        padding: 5px;
+    }
+
+    .buddy-tabs button {
+        font-size: 12px;
+        padding: 9px 5px;
+    }
+
+    .filter-chips button {
+        padding: 8px 11px;
+        font-size: 12px;
+    }
+
+    .profile-quick-links button strong {
+        font-size: 12px;
+    }
+
+    .profile-quick-links button small {
+        font-size: 9px;
+    }
+
+    .auth-story h1 {
+        font-size: 30px;
+    }
+}
+
+/* 尊重系统减少动态效果设置 */
+
+@media (prefers-reduced-motion: reduce) {
+    #page-buddies,
+    #page-records,
+    #page-profile,
+    .community-enter,
+    .buddy-status-grid .campus-activity,
+    .profile-quick-links button {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+
+/* =========================
+   紧凑布局：减少页面大块留白
+   仅调整间距，不改变业务结构与交互
+   ========================= */
+@media (min-width: 421px) {
+  .buddy-page-heading { padding: 18px 20px; }
+  #buddyDiscoverPanel, #buddyMinePanel { padding: 18px; }
+  .discovery-filters { margin: 10px 0 14px; }
+  .filter-chips { gap: 7px; margin: 10px 0 14px; }
+  .publish-heading { margin-bottom: 12px; }
+  #page-records > .page-heading { padding: 17px 20px; margin-bottom: 14px; }
+  #page-records > .card { padding: 18px; margin-bottom: 14px; }
+  .record-insights { margin-top: 12px; }
+  .messages-header { padding: 15px 18px; }
+  .buddy-chat-list { gap: 8px; }
+  .profile-page-heading { padding: 16px 20px; margin-bottom: 14px; }
+  .profile-hero { padding: 18px; margin-bottom: 14px; }
+  .profile-progress { margin-top: 14px; }
+  .profile-quick-links { gap: 10px; }
+  .profile-quick-links button { min-height: 88px; padding: 10px; }
+  .auth-wrap { gap: 18px; padding: 24px; }
+  .auth-story { padding: 28px; }
+  .auth-card { padding: 26px; }
+}
+
+@media (max-width: 420px) {
+  .buddy-page-heading, #page-records > .page-heading, .profile-page-heading { padding: 14px; }
+  #buddyDiscoverPanel, #buddyMinePanel, #page-records > .card { padding: 13px; }
+  .messages-header, .profile-hero { padding: 14px; }
+  .auth-wrap { padding: 12px; gap: 12px; }
+  .auth-story, .auth-card { padding: 18px 15px; }
+}

@@ -1,0 +1,283 @@
+
+/* =========================================
+   丰富运动图标系统：彩色、圆润、校园活力
+   ========================================= */
+
+.home-sport-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+    margin: 22px 0 30px;
+}
+
+.home-sport-shortcuts .sport-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 132px;
+    padding: 15px 8px;
+    border: 1px solid #e9eadf;
+    border-radius: 23px;
+    background: #fffefa;
+    color: #254b39;
+    box-shadow: 0 7px 20px rgba(38, 77, 52, .06);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.home-sport-shortcuts .sport-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 13px 27px rgba(38, 77, 52, .13);
+}
+
+.home-sport-shortcuts .sport-icon {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    flex: 0 0 60px;
+    border-radius: 21px;
+    transition: transform .25s ease;
+}
+
+.home-sport-shortcuts .sport-card:hover .sport-icon {
+    transform: rotate(-7deg) scale(1.08);
+}
+
+.home-sport-shortcuts .sport-icon svg {
+    display: block;
+    width: 48px;
+    height: 48px;
+    fill: initial;
+    stroke: none;
+}
+
+.home-sport-shortcuts .sport-name {
+    width: auto;
+    height: auto;
+    flex: none;
+    font-size: 15px;
+    font-weight: 750;
+    color: #284d3a;
+}
+
+.home-sport-shortcuts .sport-subtitle {
+    width: auto;
+    height: auto;
+    flex: none;
+    font-size: 11px;
+    color: #929b8d;
+}
+
+/* 不同运动使用不同的主题色 */
+
+.sport-badminton {
+    background: linear-gradient(150deg, #fffefa, #fff8eb) !important;
+}
+
+.sport-basketball {
+    background: linear-gradient(150deg, #fffefa, #fff1e7) !important;
+}
+
+.sport-running {
+    background: linear-gradient(150deg, #fffefa, #edf6ed) !important;
+}
+
+.sport-more {
+    background: linear-gradient(150deg, #fffefa, #f4effb) !important;
+}
+
+.sport-badminton .sport-icon {
+    background: #fff0d9;
+}
+
+.sport-basketball .sport-icon {
+    background: #fce8d9;
+}
+
+.sport-running .sport-icon {
+    background: #e5f2e8;
+}
+
+.sport-more .sport-icon {
+    background: #f0eaf9;
+}
+
+/* 活动标题区域 */
+
+.discovery-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.discovery-title-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #fff2d9, #f8e8c9);
+}
+
+.discovery-title-icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.home-discovery-heading h2 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 800;
+    color: #244b39;
+}
+
+.discovery-subtitle {
+    display: block;
+    margin-top: 5px;
+    color: #929b8d;
+    font-size: 11px;
+}
+
+.home-discovery-heading .discovery-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: 30px;
+    background: #edf4e9;
+    color: #267252;
+    font-weight: 650;
+    box-shadow: none;
+}
+
+.discovery-refresh svg {
+    width: 16px;
+    height: 16px;
+}
+
+.discovery-refresh:hover svg {
+    transform: rotate(45deg);
+}
+
+.discovery-refresh svg {
+    transition: transform .3s ease;
+}
+
+/* 更多活动按钮 */
+
+.home-more-activities {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    min-height: 49px;
+    border: 1px solid #e6eadf !important;
+    border-radius: 18px !important;
+    background: linear-gradient(110deg, #fffefa, #f0f5eb) !important;
+    color: #267252;
+    font-weight: 700;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.home-more-activities svg {
+    width: 18px;
+    height: 18px;
+    transition: transform .2s;
+}
+
+.home-more-activities:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(38, 77, 52, .1);
+}
+
+.home-more-activities:hover svg {
+    transform: translateX(4px);
+}
+
+/* 夜间模式适配 */
+
+:root[data-theme="night"] .home-sport-shortcuts .sport-card {
+    background: #20382e !important;
+    border-color: #365143;
+    color: #e8f1e8;
+    box-shadow: none;
+}
+
+:root[data-theme="night"] .home-sport-shortcuts .sport-name {
+    color: #e8f1e8;
+}
+
+:root[data-theme="night"] .home-sport-shortcuts .sport-subtitle {
+    color: #a6b6a6;
+}
+
+:root[data-theme="night"] .discovery-title-icon {
+    background: #493d2b;
+}
+
+:root[data-theme="night"] .home-discovery-heading h2 {
+    color: #e6f0e5;
+}
+
+:root[data-theme="night"] .discovery-subtitle {
+    color: #a6b6a6;
+}
+
+:root[data-theme="night"] .home-more-activities {
+    background: #20382e !important;
+    border-color: #365143 !important;
+    color: #b8dfc2;
+}
+
+/* 手机端 */
+
+@media (max-width: 760px) {
+    .home-sport-shortcuts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 11px;
+    }
+
+    .home-sport-shortcuts .sport-card {
+        min-height: 112px;
+        border-radius: 20px;
+    }
+
+    .home-sport-shortcuts .sport-icon {
+        width: 52px;
+        height: 52px;
+        flex-basis: 52px;
+        border-radius: 17px;
+    }
+
+    .home-sport-shortcuts .sport-icon svg {
+        width: 43px;
+        height: 43px;
+    }
+
+    .discovery-title-icon {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .home-discovery-heading h2 {
+        font-size: 18px;
+    }
+
+    .discovery-subtitle {
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-sport-shortcuts *,
+    .home-more-activities *,
+    .discovery-refresh svg {
+        transition: none !important;
+    }
+}
