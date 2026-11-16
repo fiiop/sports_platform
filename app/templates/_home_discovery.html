@@ -1,13 +1,113 @@
+
 <section id="homeDiscovery" class="home-discovery" aria-labelledby="homeDiscoveryTitle">
 
+  <!-- 运动分类图标 -->
   <div class="home-sport-shortcuts" aria-label="选择想玩的运动">
-    <button type="button" data-home-sport="羽毛球"><span aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="9" cy="8" rx="5" ry="6.5" transform="rotate(40 9 8)"/><path d="m13 13 7 8M5 6l7 6M6 3l9 7M5 10l7-7M7 13l8-8"/></svg></span>羽毛球</button>
-    <button type="button" data-home-sport="篮球"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M6 5q10 6 12 14M18 5Q8 11 6 19"/></svg></span>篮球</button>
-    <button type="button" data-home-sport="跑步"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="15" cy="4" r="2"/><path d="m12 8-4 6 6 3-2 5M8 14l-3 5H2M12 8l4 4h5M12 8H8l-3 4"/></svg></span>跑步</button>
-    <button type="button" data-home-sport=""><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="3" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M18 15v6m-3-3h6"/></svg></span>更多运动</button>
+
+    <!-- 羽毛球 -->
+    <button type="button" data-home-sport="羽毛球" class="sport-card sport-badminton">
+      <span class="sport-icon">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="#FFF0D9"/>
+          <g transform="rotate(38 24 24)">
+            <path d="M14 8 Q24 3 34 8 L29 24 Q24 29 19 24Z" fill="#E7A34D"/>
+            <path d="M14 8L19 24M21 6L23 26M28 6L27 25M34 8L29 24" fill="none" stroke="#A96B32" stroke-width="1.5"/>
+            <path d="M19 24L23 34L27 24" fill="#F7DCA9" stroke="#A96B32" stroke-width="1.5"/>
+            <path d="M23 34L30 43" stroke="#17634D" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <circle cx="11" cy="34" r="3" fill="#F2A24F"/>
+        </svg>
+      </span>
+      <span class="sport-name">羽毛球</span>
+      <span class="sport-subtitle">轻盈挥拍</span>
+    </button>
+
+    <!-- 篮球 -->
+    <button type="button" data-home-sport="篮球" class="sport-card sport-basketball">
+      <span class="sport-icon">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="#FCE8D9"/>
+          <circle cx="24" cy="24" r="15" fill="#EF9349"/>
+          <path d="M9 24H39M24 9V39M13 13Q24 24 35 35M35 13Q24 24 13 35" fill="none" stroke="#9D542A" stroke-width="2"/>
+          <path d="M9 16Q5 22 9 29M39 16Q43 22 39 29" fill="none" stroke="#F8C18D" stroke-width="2"/>
+          <circle cx="36" cy="11" r="3" fill="#F6C75D"/>
+        </svg>
+      </span>
+      <span class="sport-name">篮球</span>
+      <span class="sport-subtitle">热血开场</span>
+    </button>
+
+    <!-- 跑步 -->
+    <button type="button" data-home-sport="跑步" class="sport-card sport-running">
+      <span class="sport-icon">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="#E5F2E8"/>
+          <circle cx="30" cy="9" r="4" fill="#ECA34D"/>
+          <path d="M23 17L17 25L25 29L21 39" fill="none" stroke="#247956" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M23 18L31 23L38 22M18 24L10 28L6 35M25 29L33 34L39 33" fill="none" stroke="#247956" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 13L14 13M5 18L10 18" stroke="#83B994" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="sport-name">跑步</span>
+      <span class="sport-subtitle">自在奔跑</span>
+    </button>
+
+    <!-- 更多运动 -->
+    <button type="button" data-home-sport="" class="sport-card sport-more">
+      <span class="sport-icon">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="#F0EAF9"/>
+          <rect x="9" y="9" width="12" height="12" rx="4" fill="#9275C5"/>
+          <rect x="27" y="9" width="12" height="12" rx="4" fill="#E9A04E"/>
+          <rect x="9" y="27" width="12" height="12" rx="4" fill="#70AE8B"/>
+          <path d="M33 27V39M27 33H39" stroke="#8064B6" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="sport-name">更多运动</span>
+      <span class="sport-subtitle">发现新乐趣</span>
+    </button>
+
   </div>
-  <div class="home-discovery-heading"><h2 id="homeDiscoveryTitle">近期好约的运动</h2><button id="refreshHomeActivities" class="text-button" type="button" aria-label="刷新同校活动">刷新 ↻</button></div>
+
+  <!-- 活动标题 -->
+  <div class="home-discovery-heading">
+    <div class="discovery-title-group">
+      <span class="discovery-title-icon" aria-hidden="true">
+        <svg viewBox="0 0 32 32">
+          <path d="M16 3L19.5 11.5L28 15L19.5 18.5L16 27L12.5 18.5L4 15L12.5 11.5Z" fill="#EFA44E"/>
+          <circle cx="24" cy="6" r="3" fill="#78AE83"/>
+          <circle cx="7" cy="25" r="2.5" fill="#EFA44E"/>
+        </svg>
+      </span>
+      <div>
+        <h2 id="homeDiscoveryTitle">近期好约的运动</h2>
+        <span class="discovery-subtitle">找到同校伙伴，一起挥洒汗水</span>
+      </div>
+    </div>
+
+    <button id="refreshHomeActivities" class="text-button discovery-refresh"
+            type="button" aria-label="刷新同校活动">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11A8 8 0 0 0 6 6L4 8M4 3V8H9M4 13A8 8 0 0 0 18 18L20 16M20 21V16H15"
+              fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      刷新
+    </button>
+  </div>
+
   <p id="homeDiscoveryMsg" class="msg" role="status"></p>
+
+  <!-- 原有活动列表，保留 JavaScript 数据渲染 -->
   <div id="homeActivityList" class="home-activity-list" aria-live="polite"></div>
-  <button type="button" class="ghost home-more-activities" data-go="buddies">看看更多同校活动 →</button>
+
+  <button type="button" class="ghost home-more-activities" data-go="buddies">
+    <span>发现更多运动伙伴</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12H19M12 5L19 12L12 19"
+            fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
 </section>
