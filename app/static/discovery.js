@@ -27,7 +27,7 @@ async function loadHomeActivities(){
     const rows=await api('/api/activities?scope=school&sort=time&limit=3');
     if(epoch!==state.epoch||request!==discovery.request)return;
     discovery.rows=rows;$('homeCampusLabel').textContent=`${campus.profile?.school||rows[0]?.school||'我的校园'} · 一起运动`;
-    $('homeActivityList').innerHTML=rows.map(row=>campusActivityCard(row,true)).join('')||'<div class="campus-empty"><div class="campus-empty-art activity-cover illustrated">'+activityArtwork('羽毛球')+'</div><h3>第一场，从你开始</h3><p>还没有同校活动。发出邀请，约同学一起动一动。</p><button type="button" data-home-create="羽毛球">发起一场羽毛球局 ↗</button><button type="button" class="text-button" data-home-own>选择其他运动</button></div>';
+    $('homeActivityList').innerHTML=rows.map(row=>campusActivityCard(row,true)).join('')||'<div class="campus-empty campus-empty-warm"><div class="campus-empty-art lifestyle-art"><img src="/static/images/campus-friends.svg" alt="几位大学生在校园里一起打球和跑步"></div><div class="campus-empty-copy"><span class="empty-kicker">YOUR CAMPUS, YOUR CREW</span><h3>第一场，从你开始</h3><p>还没有同校活动。发出邀请，约同学一起动一动。</p><div class="empty-actions"><button type="button" data-home-create="羽毛球">发起一场羽毛球局 ↗</button><button type="button" class="text-button" data-home-own>选择其他运动</button></div></div></div>';
     $('homeDiscoveryMsg').textContent='';
   }catch(e){if(epoch===state.epoch&&request===discovery.request)$('homeDiscoveryMsg').textContent=e.message;}
   finally{if(request===discovery.request)$('homeActivityList').removeAttribute('aria-busy');}
