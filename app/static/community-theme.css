@@ -1357,3 +1357,14 @@ dialog .actions button:first-child {
   .auth-wrap { padding: 12px; gap: 12px; }
   .auth-story, .auth-card { padding: 18px 15px; }
 }
+
+/* 缩小校园运动首页插画 */
+img[src*="campus-friends.svg"] {
+    width: 260px;
+    max-width: 85%;
+    height: auto;
+    max-height: 165px;
+    object-fit: contain;
+    display: block;
+    margin: 12px auto;
+}
