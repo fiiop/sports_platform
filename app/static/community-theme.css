@@ -1369,3 +1369,516 @@ img[src*="campus-friends.svg"] {
     display: block;
     margin: 8px auto;
 }
+
+/* ==========================================
+   循动 Campus Move 全站卡片统一美化
+   只修改外观，不修改业务逻辑
+   ========================================== */
+
+:root {
+    --card-cream: #fffdf8;
+    --card-green: #eaf3e7;
+    --card-orange: #fff0dc;
+    --card-purple: #f1ebf8;
+    --card-pink: #fbeee9;
+    --card-border: #eee8dc;
+    --card-shadow: 0 8px 24px rgba(75, 91, 65, .075);
+    --card-shadow-hover: 0 13px 30px rgba(75, 91, 65, .13);
+}
+
+/* 1. 全站普通卡片 */
+
+.page .card,
+#buddyAppointmentsPanel .card,
+#buddyGroupPanel .card,
+.profile-section,
+.profile-progress,
+.record-insights,
+#buddyDiscoverPanel,
+#buddyMinePanel {
+    border: 1px solid var(--card-border) !important;
+    border-radius: 22px !important;
+    background-color: var(--card-cream) !important;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow .22s ease,
+                transform .22s ease,
+                border-color .22s ease;
+}
+
+/* 卡片悬停 */
+
+.page .card:hover,
+.profile-section:hover,
+.profile-progress:hover,
+#buddyAppointmentsPanel .card:hover {
+    box-shadow: var(--card-shadow-hover);
+    border-color: #e4ddce !important;
+}
+
+/* 卡片标题 */
+
+.page .card h2,
+.page .card h3,
+.profile-section h2,
+.profile-progress h2 {
+    color: #315640;
+    font-weight: 800;
+}
+
+/* 卡片内部间距 */
+
+.page .card > .section-head,
+.profile-section > .section-head {
+    margin-bottom: 17px;
+}
+
+/* 2. 首页运动活动卡片 */
+
+.campus-activity {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e9e5d9 !important;
+    border-radius: 23px !important;
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #fffaf0
+    ) !important;
+    box-shadow: var(--card-shadow);
+    transition: transform .22s ease,
+                box-shadow .22s ease;
+}
+
+.campus-activity:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.activity-cover {
+    overflow: hidden;
+    border-radius: 19px 19px 0 0;
+}
+
+.activity-cover img {
+    transition: transform .35s ease;
+}
+
+.campus-activity:hover .activity-cover img {
+    transform: scale(1.035);
+}
+
+.activity-content {
+    padding: 18px !important;
+}
+
+.activity-title h3 {
+    color: #315640 !important;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.activity-sport {
+    display: inline-block;
+    padding: 6px 13px !important;
+    border-radius: 30px !important;
+    background: #fff0dc !important;
+    color: #a76c32 !important;
+    font-weight: 750;
+}
+
+.activity-seats {
+    padding: 6px 12px;
+    border-radius: 30px;
+    background: #e9f3e7;
+    color: #51805b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.activity-when {
+    color: #856b9b;
+    font-weight: 650;
+}
+
+.activity-host {
+    border-top: 1px dashed #e9e3d8;
+    padding-top: 13px;
+}
+
+/* 3. 首页运动分类卡片 */
+
+.home-sport-shortcuts .sport-card {
+    border: 1px solid #eee7d9;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(75, 91, 65, .06);
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+}
+
+.home-sport-shortcuts .sport-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.sport-badminton {
+    background: linear-gradient(145deg, #fff5e7, #fffdf8);
+}
+
+.sport-basketball {
+    background: linear-gradient(145deg, #fff0e5, #fffdf8);
+}
+
+.sport-running {
+    background: linear-gradient(145deg, #eaf4e8, #fffdf8);
+}
+
+.sport-more {
+    background: linear-gradient(145deg, #f0ebf8, #fffdf8);
+}
+
+.home-sport-shortcuts .sport-icon {
+    transition: transform .25s ease;
+}
+
+.home-sport-shortcuts .sport-card:hover .sport-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* 4. 我的运动约定卡片 */
+
+.meetup-card {
+    position: relative;
+    overflow: hidden;
+    padding: 23px !important;
+    border-radius: 24px !important;
+    border: 1px solid #eee4d7 !important;
+    background:
+        radial-gradient(circle at 95% 5%,
+            #fff0d9 0,
+            transparent 25%),
+        linear-gradient(145deg,
+            #ffffff,
+            #fffaf2) !important;
+    box-shadow: var(--card-shadow);
+    transition: transform .22s ease,
+                box-shadow .22s ease;
+}
+
+.meetup-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.meetup-card h2 {
+    color: #40364e;
+    font-size: 24px;
+    font-weight: 850;
+}
+
+.meetup-card .pill {
+    border-radius: 30px;
+    padding: 7px 13px;
+}
+
+.meetup-card .buddy-date {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #f1ebf8;
+    color: #8062a2;
+    font-weight: 700;
+}
+
+.meetup-card .fine {
+    color: #82758b;
+}
+
+.meetup-card .change-proposal {
+    padding: 15px;
+    border-radius: 16px;
+    background: #f2edf8;
+    border: 1px solid #e6dcef;
+}
+
+.meetup-card .cancel-note {
+    padding: 11px;
+    border-radius: 12px;
+    background: #fff0ec;
+    color: #ad6a58;
+}
+
+/* 5. 找搭子状态和个人发布卡片 */
+
+.buddy-state-card,
+.buddy-status {
+    border-radius: 21px;
+    border: 1px solid #e9e8da;
+    background: linear-gradient(145deg, #ffffff, #f6f8ef);
+    box-shadow: 0 6px 18px rgba(75, 91, 65, .06);
+}
+
+.own-activity {
+    border-radius: 19px;
+    background: linear-gradient(135deg, #edf5e9, #fffaf0);
+    padding: 17px;
+    margin-bottom: 12px;
+}
+
+.buddy-preview-card {
+    border-radius: 21px;
+    background: linear-gradient(145deg, #fffaf0, #f0f5e9);
+    border: 1px solid #e9e5d9;
+    box-shadow: var(--card-shadow);
+}
+
+/* 6. 运动记录统计卡片 */
+
+#page-records .metric,
+#page-records .metrics .card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px !important;
+    border: 1px solid #eae6dc !important;
+    box-shadow: 0 6px 18px rgba(75, 91, 65, .07);
+    transition: transform .22s ease,
+                box-shadow .22s ease;
+}
+
+#page-records .metric:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+#page-records .metric:nth-child(1) {
+    background: linear-gradient(140deg, #e7f3e5, #fffefa);
+}
+
+#page-records .metric:nth-child(2) {
+    background: linear-gradient(140deg, #fff0dc, #fffefa);
+}
+
+#page-records .metric:nth-child(3) {
+    background: linear-gradient(140deg, #eee9fa, #fffefa);
+}
+
+#page-records .metric b {
+    font-size: 31px;
+    color: #315640;
+    font-weight: 850;
+}
+
+#page-records .metric span {
+    color: #7b8272;
+}
+
+/* 7. 运动趋势图表 */
+
+.record-insights {
+    padding: 20px !important;
+    background: linear-gradient(145deg, #fffefa, #f8f6ee) !important;
+}
+
+.record-insights > summary {
+    border-radius: 15px;
+    padding: 14px;
+    background: #eaf3e7;
+    color: #315640;
+    font-weight: 750;
+}
+
+.chart-card {
+    border-radius: 22px !important;
+    background: linear-gradient(145deg, #ffffff, #f5f7ee) !important;
+}
+
+/* 8. 个人主页卡片 */
+
+.profile-progress {
+    padding: 22px !important;
+    background: linear-gradient(140deg, #eaf4e7, #fffaf0) !important;
+}
+
+.profile-metrics > div {
+    border-radius: 17px;
+    padding: 15px 10px;
+    background: rgba(255,255,255,.75);
+    border: 1px solid #e8e8d9;
+    transition: transform .2s ease;
+}
+
+.profile-metrics > div:hover {
+    transform: translateY(-3px);
+}
+
+.profile-metrics strong {
+    color: #39734f;
+    font-size: 27px;
+    font-weight: 850;
+}
+
+.profile-quick-links button {
+    border-radius: 19px;
+    border: 1px solid #eee7da;
+    background: linear-gradient(145deg, #fffdf8, #f1f5eb);
+    box-shadow: 0 5px 15px rgba(75, 91, 65, .06);
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+}
+
+.profile-quick-links button:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.profile-section {
+    padding: 21px !important;
+    margin-top: 17px;
+}
+
+.profile-invite-link {
+    border-radius: 20px;
+    background: linear-gradient(120deg, #eaf3e7, #fff0dc);
+    border: 1px solid #e8e6d9;
+    box-shadow: var(--card-shadow);
+}
+
+/* 9. 运动足迹和记录列表 */
+
+.profile-record-empty,
+.profile-section .profile-record {
+    border-radius: 17px;
+    background: #f5f7ef;
+    padding: 15px;
+}
+
+#records > *,
+.profile-record-empty {
+    border-radius: 16px;
+}
+
+/* 10. 消息列表和组局卡片 */
+
+.buddy-chat-list > *,
+.chat-list-row,
+.group-chat-choice {
+    border-radius: 18px !important;
+    border: 1px solid #eee8df;
+    background: linear-gradient(135deg, #ffffff, #faf7f1);
+    box-shadow: 0 4px 14px rgba(75, 91, 65, .05);
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+}
+
+.buddy-chat-list > *:hover,
+.chat-list-row:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow);
+}
+
+.pinned-meetup {
+    border-radius: 18px;
+    background: linear-gradient(120deg, #eaf3e7, #fff5e8);
+    border: 1px solid #e8e7da;
+}
+
+/* 11. 通知、举报和其他信息卡片 */
+
+.notice-disclosure,
+.message-notification-settings,
+.report-row {
+    border-radius: 17px;
+    border: 1px solid #eee7dd;
+    background: #fffdf8;
+    padding: 15px;
+    box-shadow: 0 4px 14px rgba(75, 91, 65, .05);
+}
+
+.resolution {
+    border-radius: 12px;
+    padding: 11px;
+    background: #edf4e9;
+}
+
+/* 12. 统一按钮风格 */
+
+.page .card button:not(.text-button):not(.ghost) {
+    border-radius: 13px;
+}
+
+.page .card .ghost {
+    border-radius: 12px;
+    background: #f0f4e9;
+    color: #47724f;
+    border: 1px solid #e4eadc;
+}
+
+.page .card .text-button {
+    color: #8061a2;
+    font-weight: 700;
+}
+
+/* 13. 统一标签风格 */
+
+.pill,
+.activity-seats {
+    border-radius: 30px;
+    font-weight: 700;
+}
+
+/* 14. 弹窗内的信息卡片 */
+
+dialog .card,
+dialog .buddy-preview-card,
+dialog .change-proposal {
+    border-radius: 19px;
+    border: 1px solid #eae3d8;
+    box-shadow: 0 5px 18px rgba(75, 91, 65, .06);
+}
+
+/* 15. 手机端适配 */
+
+@media (max-width: 640px) {
+
+    .page .card,
+    .meetup-card,
+    .profile-section,
+    .profile-progress,
+    .record-insights {
+        border-radius: 19px !important;
+    }
+
+    .meetup-card {
+        padding: 18px !important;
+    }
+
+    .meetup-card h2 {
+        font-size: 21px;
+    }
+
+    .activity-content {
+        padding: 14px !important;
+    }
+
+    .profile-section {
+        padding: 17px !important;
+    }
+
+    .profile-progress {
+        padding: 17px !important;
+    }
+
+    #page-records .metric {
+        padding: 15px !important;
+    }
+}
+
+/* 16. 尊重系统减少动态效果设置 */
+
+@media (prefers-reduced-motion: reduce) {
+    .campus-activity,
+    .meetup-card,
+    .page .card,
+    .profile-quick-links button {
+        transition: none !important;
+    }
+}
