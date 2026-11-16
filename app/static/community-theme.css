@@ -2574,3 +2574,68 @@ dialog .change-proposal {
         transition: none !important;
     }
 }
+
+/* =================================
+   放大小船，优化人物与船的比例
+   ================================= */
+
+/* 加大动画场景 */
+.boat-scene {
+    height: 260px !important;
+}
+
+/* 放大船身 */
+.boat-svg {
+    width: 112% !important;
+    height: 165px !important;
+    bottom: 0 !important;
+    max-width: none !important;
+}
+
+/* 人物放大并向下移动，让人物坐在船上 */
+.boat-passengers {
+    bottom: 103px !important;
+    width: 90% !important;
+    gap: 7px !important;
+}
+
+/* 人物尺寸 */
+.boat-passenger {
+    width: 44px !important;
+    height: 65px !important;
+    flex-basis: 44px !important;
+    font-size: 39px !important;
+}
+
+/* 水波位置 */
+.boat-wave {
+    bottom: 17px !important;
+}
+
+/* 人数多时让人物排列更加紧凑 */
+.boat-passengers {
+    flex-wrap: nowrap;
+}
+
+/* 手机端 */
+@media (max-width: 480px) {
+    .boat-scene {
+        height: 235px !important;
+    }
+
+    .boat-svg {
+        width: 120% !important;
+        height: 150px !important;
+    }
+
+    .boat-passengers {
+        bottom: 94px !important;
+        width: 95% !important;
+        gap: 2px !important;
+    }
+
+    .boat-passenger {
+        font-size: 31px !important;
+        flex-basis: 32px !important;
+    }
+}
