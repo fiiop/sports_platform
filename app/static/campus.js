@@ -1,6 +1,6 @@
-const campus={profile:null,meetings:[],meeting:null,request:0,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminId:null,adminRows:[]};
+const campus={profile:null,meetings:[],meeting:null,request:0,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminId:null,adminRows:[],boatSeen:{}};
 const meetingLabels={pending:'待回应',confirmed:'已约好',completed:'已完成',cancelled:'已取消',declined:'未接受',expired:'已过期'};
-function resetCampus(){campus.request++;delete $('groupChats').dataset.signature;Object.assign(campus,{profile:null,meetings:[],meeting:null,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminRows:[]});for(const id of ['meetupList','meetupDetail','groupMessages','pinnedMeetup','groupChats','noticeList','adminReports','myReports'])$(id).replaceChildren();for(const id of ['meetupFormDialog','repeatMeetupDialog','cancelMeetupDialog','reportDialog','adminDialog'])if($(id).open)$(id).close();$('adminPanel').classList.add('hidden');$('profileSchool').value='湘潭大学';}
+function resetCampus(){campus.request++;delete $('groupChats').dataset.signature;Object.assign(campus,{profile:null,meetings:[],meeting:null,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminRows:[],boatSeen:{}});for(const id of ['meetupList','meetupDetail','groupMessages','pinnedMeetup','groupChats','noticeList','adminReports','myReports'])$(id).replaceChildren();for(const id of ['meetupFormDialog','repeatMeetupDialog','cancelMeetupDialog','reportDialog','adminDialog'])if($(id).open)$(id).close();$('adminPanel').classList.add('hidden');$('profileSchool').value='湘潭大学';}
 function applyTheme(choice){const actual=choice==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'night':'forest'):choice;document.documentElement.dataset.theme=actual;document.querySelector('meta[name="theme-color"]').content={forest:'#185c45',ocean:'#245f9b',lilac:'#70529a',night:'#132322'}[actual]||'#185c45';try{localStorage.setItem('campus-theme',choice);}catch{}document.querySelectorAll('[data-theme-choice]').forEach(b=>{const active=b.dataset.themeChoice===choice;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});}
 let profileQueue=Promise.resolve(),themeIntent=0;
 async function loadCampus(){const epoch=state.epoch;campus.profileReady=api('/api/profile');const profile=await campus.profileReady;if(epoch!==state.epoch)return;campus.profile=profile;$('profileSchool').value=profile.school;$('campusLabel').textContent=`${profile.school} · 一起运动`;$('completedCount').textContent=`已完成 ${profile.completed} 次约定`;$('adminPanel').classList.toggle('hidden',!profile.is_admin);applyTheme(profile.theme);if(typeof renderIdentity==='function')renderIdentity(profile,true);await loadMeetups();}
@@ -54,7 +54,7 @@ async function loadMeetup(id){
 }
 function updateGroupComposer(){const m=campus.meeting,mine=m?.members.find(p=>p.user_id===state.user?.id);$('groupSend').disabled=mine?.status!=='accepted'||['cancelled','declined'].includes(m?.state);$('groupMessage').disabled=$('groupSend').disabled;$('groupMessageMsg').textContent=$('groupSend').disabled?'当前不能发言，已有聊天记录保留。':'';}
 function appendGroupMessages(rows,older=false){const box=$('groupMessages'),fragment=document.createDocumentFragment();for(const row of rows){if(box.querySelector(`[data-message="${row.id}"]`))continue;fragment.append(messageNode(row,true));campus.groupAfter=Math.max(campus.groupAfter,row.id);campus.groupBefore=campus.groupBefore?Math.min(campus.groupBefore,row.id):row.id;}if(older)box.prepend(fragment);else box.append(fragment);}
-async function pollGroup(){if(campus.groupLoading||!campus.meeting||buddy.tab!=='group')return;campus.groupLoading=true;const epoch=state.epoch,id=campus.meeting.id,request=campus.request;try{const m=await api(`/api/meetups/${id}`);if(epoch!==state.epoch||request!==campus.request)return;if(JSON.stringify(m)!==JSON.stringify(campus.meeting)){campus.meeting=m;$('meetupDetail').innerHTML=meetingCard(m,true);}const canRead=m.kind==='group'&&m.members.some(p=>p.user_id===state.user.id&&['accepted','cancelled'].includes(p.status));$('groupChatPanel').classList.toggle('hidden',!canRead);if(canRead){for(const member of m.members)updateMessageIdentity($('groupMessages'),member,member.user_id);const rows=await api(`/api/meetups/${id}/messages?after=${campus.groupAfter}`);if(epoch!==state.epoch||request!==campus.request)return;const box=$('groupMessages'),atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<50;appendGroupMessages(rows);if(atBottom){box.scrollTop=box.scrollHeight;await api(`/api/meetups/${id}/read`,{method:'POST'});}updateGroupComposer();}}finally{if(epoch===state.epoch)campus.groupLoading=false;}}
+async function pollGroup(){if(campus.groupLoading||!campus.meeting||buddy.tab!=='group')return;campus.groupLoading=true;const epoch=state.epoch,id=campus.meeting.id,request=campus.request;try{const m=await api(`/api/meetups/${id}`);if(epoch!==state.epoch||request!==campus.request)return;const newcomers=newBoatMembers(m);if(newcomers.length)showBoatJoinAnimation(m,newcomers);if(JSON.stringify(m)!==JSON.stringify(campus.meeting)){campus.meeting=m;$('meetupDetail').innerHTML=meetingCard(m,true);}const canRead=m.kind==='group'&&m.members.some(p=>p.user_id===state.user.id&&['accepted','cancelled'].includes(p.status));$('groupChatPanel').classList.toggle('hidden',!canRead);if(canRead){for(const member of m.members)updateMessageIdentity($('groupMessages'),member,member.user_id);const rows=await api(`/api/meetups/${id}/messages?after=${campus.groupAfter}`);if(epoch!==state.epoch||request!==campus.request)return;const box=$('groupMessages'),atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<50;appendGroupMessages(rows);if(atBottom){box.scrollTop=box.scrollHeight;await api(`/api/meetups/${id}/read`,{method:'POST'});}updateGroupComposer();}}finally{if(epoch===state.epoch)campus.groupLoading=false;}}
 function findMeeting(id){return campus.meeting?.id===id?campus.meeting:campus.meetings.find(m=>m.id===id);}
 function canRepeatMeeting(m){
   const mine=m?.members.find(p=>p.user_id===state.user?.id);
@@ -92,49 +92,60 @@ async function submitRepeatMeeting(){
 }
 async function withConflict(url,payload){try{return await api(url,{method:'POST',body:JSON.stringify(payload)});}catch(e){if(e.detail?.conflicts&&confirm(e.detail.message))return api(url,{method:'POST',body:JSON.stringify({...payload,allow_conflict:true})});throw e;}}
 async function refreshMeetingResult(m){if(campus.meeting?.id===m.id){campus.meeting=m;$('meetupDetail').innerHTML=meetingCard(m,true);const canRead=m.kind==='group'&&m.members.some(p=>p.user_id===state.user.id&&['accepted','cancelled'].includes(p.status));$('groupChatPanel').classList.toggle('hidden',!canRead);updateGroupComposer();}await loadMeetups();if(buddy.chatId)await loadPinnedMeetup(buddy.chatId);if(m.state==='completed'){const epoch=state.epoch,p=await api('/api/profile');if(epoch===state.epoch){if(campus.profile)Object.assign(campus.profile,{completed:p.completed,is_admin:p.is_admin});$('completedCount').textContent=`已完成 ${p.completed} 次约定`;}}}
-function showBoatJoinAnimation(meeting,result){
-  // 只在服务器确认接受邀请后展示；人数以接口返回的最新成员状态为准。
-  const members=(result?.members||meeting?.members||[]).filter(p=>p.status==='accepted');
-  const names=members.map(p=>chatName(p)).filter(Boolean);
-  const count=Math.max(1,names.length);
+function boatAcceptedMembers(meeting){
+  return (Array.isArray(meeting?.members)?meeting.members:[])
+    .filter(p=>p.status==='accepted'&&p.user_id!=null)
+    .map(p=>({id:p.user_id,name:chatName(p)}));
+}
+function rememberBoatRoster(meeting){
+  if(!meeting)return;
+  campus.boatSeen[meeting.id]=boatAcceptedMembers(meeting).map(p=>p.id);
+}
+// 轮询时调用：返回本次真正“新上船”的成员 id，首次看到该队伍不播放动画。
+function newBoatMembers(meeting){
+  const roster=boatAcceptedMembers(meeting),ids=roster.map(p=>p.id);
+  const seen=campus.boatSeen[meeting.id];
+  campus.boatSeen[meeting.id]=ids;
+  if(!seen)return [];
+  return ids.filter(id=>!seen.includes(id));
+}
+function showBoatJoinAnimation(meeting,newcomers=[]){
+  // 只使用服务端返回的最新成员状态，人数 = 当前已接受邀请的人数。
+  const roster=boatAcceptedMembers(meeting);
+  if(!roster.length)return;
+  const count=roster.length;
+  const extra=new Set(Array.isArray(newcomers)?newcomers:[]);
   const old=document.getElementById('boatJoinOverlay');
   if(old)old.remove();
   const overlay=document.createElement('div');
   overlay.id='boatJoinOverlay';
   overlay.className='boat-join-overlay';
-
- // 移动端显示兜底：不依赖外部 CSS 是否成功加载
-  overlay.style.cssText = `
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  z-index: 2147483647 !important;
-  display: grid !important;
-  place-items: center !important;
-  box-sizing: border-box !important;
-  padding: 16px !important;
-  background: rgba(20,39,32,.68) !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-`;
+  overlay.style.cssText='position:fixed!important;inset:0!important;width:100%!important;height:100%!important;min-height:100vh!important;min-height:100dvh!important;z-index:2147483647!important;display:grid!important;place-items:center!important;box-sizing:border-box!important;padding:16px!important;background:rgba(20,39,32,.68)!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important';
+  // 船与人物的尺寸随人数变化，CSS 只读取这些变量，不再用 !important 互相覆盖。
+  const look=count<=2?{w:'94%',h:'132px',p:'40px',ph:'58px',b:'42px'}
+    :count<=4?{w:'110%',h:'146px',p:'36px',ph:'54px',b:'47px'}
+    :count<=6?{w:'124%',h:'158px',p:'32px',ph:'50px',b:'51px'}
+    :{w:'136%',h:'166px',p:'28px',ph:'46px',b:'54px'};
+  overlay.style.setProperty('--boat-width',look.w);
+  overlay.style.setProperty('--boat-height',look.h);
+  overlay.style.setProperty('--person-size',look.p);
+  overlay.style.setProperty('--person-height',look.ph);
+  overlay.style.setProperty('--people-bottom',look.b);
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-label','加入运动小船');
-  const people=names.slice(0,8).map((name,index)=>`<span class="boat-passenger ${index===count-1?'boat-new-passenger':''}" title="${escapeHTML(name)}">🧑</span>`).join('');
-  const sizeClass=count<=2?'boat-small':count<=4?'boat-medium':'boat-large';
+  const shown=roster.slice(0,10);
+  const people=shown.map((p,index)=>`<span class="boat-passenger ${extra.has(p.id)?'boat-new-passenger':''}" style="--person-index:${index}" title="${escapeHTML(p.name)}">🧑</span>`).join('')
+    +(count>shown.length?`<span class="boat-more">+${count-shown.length}</span>`:'');
   overlay.innerHTML=`<div class="boat-join-dialog">
     <button type="button" class="boat-close" aria-label="关闭">×</button>
     <div class="boat-join-kicker">LET'S GO TOGETHER</div>
     <h2>上船成功！</h2>
-    <p class="boat-join-subtitle">你的运动伙伴又多了一位，一起出发吧</p>
-    <div class="boat-scene ${sizeClass}">
+    <p class="boat-join-subtitle">已有 ${count} 位伙伴同舟，一起出发吧</p>
+    <div class="boat-scene">
       <div class="boat-sun"></div>
       <div class="boat-passengers">${people}</div>
-      <svg class="boat-svg" viewBox="0 0 360 150" role="img" aria-label="载着运动伙伴的小船">
+      <svg class="boat-svg" viewBox="0 0 360 150" role="img" aria-label="载着 ${count} 位运动伙伴的小船">
         <path class="boat-sail" d="M177 18 L177 104 L116 104 Z"/><path class="boat-sail boat-sail-two" d="M190 35 L190 104 L247 104 Z"/>
         <path class="boat-mast" d="M182 13 L182 112"/>
         <path class="boat-hull" d="M48 105 Q180 132 312 105 L282 137 Q180 151 78 137 Z"/>
@@ -142,19 +153,19 @@ function showBoatJoinAnimation(meeting,result){
       </svg>
       <div class="boat-wave boat-wave-one"></div><div class="boat-wave boat-wave-two"></div>
     </div>
-    <div class="boat-join-count">⛵ ${count} 位伙伴，准备出发</div>
-    <p class="boat-join-names">${names.slice(0,5).map(escapeHTML).join(' · ')}</p>
+    <div class="boat-join-count">⛵ ${count} 位伙伴同舟，准备出发</div>
+    <p class="boat-join-names">${roster.slice(0,5).map(p=>escapeHTML(p.name)).join(' · ')}</p>
     <button type="button" class="boat-confirm">太棒了</button>
   </div>`;
-  // 添加到页面最外层，避免被页面内容容器裁剪
-  document.documentElement.appendChild(overlay);
-  const close=()=>{overlay.classList.add('boat-leaving');setTimeout(()=>overlay.remove(),220);};
+  document.body.appendChild(overlay);
+  let closed=false;
+  const close=()=>{if(closed)return;closed=true;overlay.classList.add('boat-leaving');document.removeEventListener('keydown',onKey);setTimeout(()=>overlay.remove(),240);};
+  const onKey=e=>{if(e.key==='Escape')close();};
   overlay.querySelector('.boat-close').addEventListener('click',close);
   overlay.querySelector('.boat-confirm').addEventListener('click',close);
   overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-  const onKey=e=>{if(e.key==='Escape'&&document.getElementById('boatJoinOverlay')){close();document.removeEventListener('keydown',onKey);}};
   document.addEventListener('keydown',onKey);
-  setTimeout(()=>{if(overlay.isConnected)close();},6500);
+  setTimeout(close,6500);
 }
 async function decideMeeting(id,action,reason=''){
   const m=findMeeting(id);
@@ -162,7 +173,7 @@ async function decideMeeting(id,action,reason=''){
   const epoch=state.epoch;
   const result=await withConflict(`/api/meetups/${id}/decision`,{action,revision:m.revision,reason});
   if(epoch!==state.epoch)return;
-  if(action==='accept')showBoatJoinAnimation(m,result);
+  if(action==='accept'){showBoatJoinAnimation(result,[state.user.id]);rememberBoatRoster(result);}
   await refreshMeetingResult(result);
   notify(action==='attend'?'已记录你的参加确认':action==='accept'?'邀请已接受':'约定已更新');
 }
@@ -195,7 +206,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(b.dataset.openMeetup)navigate(`buddies/group/${b.dataset.openMeetup}`);
   if(b.dataset.editActivity)editActivity(Number(b.dataset.editActivity));
   if(b.dataset.removeActivity)busy(b,()=>withdrawActivity(Number(b.dataset.removeActivity)),'buddyFormMsg');
-  if(b.dataset.joinActivity)busy(b,async()=>{const epoch=state.epoch,m=await withConflict(`/api/activities/${b.dataset.joinActivity}/join`,{});if(epoch===state.epoch)navigate(`buddies/group/${m.id}`);},'buddyListMsg');
+  if(b.dataset.joinActivity)busy(b,async()=>{const epoch=state.epoch,m=await withConflict(`/api/activities/${b.dataset.joinActivity}/join`,{});if(epoch!==state.epoch)return;showBoatJoinAnimation(m,[state.user.id]);rememberBoatRoster(m);navigate(`buddies/group/${m.id}`);},'buddyListMsg');
   if(b.dataset.meetupAction)busy(b,()=>decideMeeting(Number(b.dataset.meetingId),b.dataset.meetupAction),buddy.tab==='appointments'?'meetupsMsg':'meetupMsg');
   if(b.dataset.repeatMeetup)busy(b,()=>openRepeatMeeting(Number(b.dataset.repeatMeetup)));
   if(b.dataset.changeMeetup){const m=findMeeting(Number(b.dataset.changeMeetup));if(m)openInvite(m);}
