@@ -154,18 +154,8 @@ function renderBuddyChats(){
 }
 function renderMessageSelf(){if(!state.user)return;const person={...state.user,...(campus.profile||{})},signature=JSON.stringify([chatName(person),person.avatar_url]);if($('messageSelfAvatar').dataset.identity===signature)return;$('messageSelfAvatar').innerHTML=chatAvatar(person);$('messageSelfAvatar').dataset.identity=signature;}
 function chatName(person){return person?.display_name||person?.username||'运动伙伴';}
-// 聊天记录始终显示日期和具体时间
-function chatMessageTime(value){
-  const d = new Date(value);
-
-  return d.toLocaleString('zh-CN', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-}
+function chatListTime(value){const d=new Date(value);return localDate(d)===localDate()?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});}
+function chatMessageTime(value){const d=new Date(value);return d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});}
 function chatAvatar(person){const name=chatName(person);return `<span class="chat-avatar" title="${escapeHTML(name)}"><span class="chat-avatar-fallback" aria-hidden="true">${escapeHTML(Array.from(name)[0]||'同')}</span>${avatarPhotoMarkup(person,true)}</span>`;}
 function updateChatHeading(person){const signature=JSON.stringify([chatName(person),person?.avatar_url,person?.identity_hidden]);if($('buddyChatAvatar').dataset.identity!==signature){$('buddyChatAvatar').innerHTML=chatAvatar(person);$('buddyChatAvatar').dataset.identity=signature;}$('buddyChatTitle').textContent=chatName(person);$('buddyChatTopic').textContent=person?.topic||'聊聊时间和集合地点';}
 function updateMessageIdentity(box,person,userId){if(!person)return;for(const row of box.querySelectorAll(`[data-sender="${userId}"]`)){const signature=JSON.stringify([chatName(person),person.avatar_url,person.identity_hidden]);if(row.dataset.identity===signature)continue;row.querySelector('.chat-avatar')?.remove();row.insertAdjacentHTML('afterbegin',chatAvatar(person));row.dataset.identity=signature;const label=row.querySelector('.message-sender');if(label)label.textContent=chatName(person);}}
@@ -185,7 +175,7 @@ async function openBuddyChat(id){
   $('buddyMessage').disabled=!!c?.blocked;$('buddySend').disabled=!!c?.blocked;
   appendBuddyMessages(rows);$('buddyOlder').classList.toggle('hidden',rows.length<50);$('buddyMessages').scrollTop=$('buddyMessages').scrollHeight;$('buddyChatMsg').textContent=c?.blocked?'当前无法互动，可在“我的”中管理黑名单。':'';await markBuddyRead();
 }
-function messageNode(row,group=false){const mine=row.sender_id===state.user.id,item=document.createElement('div');item.className=`buddy-message ${mine?'mine':''}`;item.dataset.message=String(row.id);item.dataset.sender=String(row.sender_id);item.d                                                                                                              ataset.identity=JSON.stringify([chatName(row),row.avatar_url,row.identity_hidden]);item.innerHTML=chatAvatar(row);const body=document.createElement('div');body.className='message-body';if(group&&!mine){const name=document.createElement('strong');name.className='message-sender';name.textContent=chatName(row);body.append(name);}const bubble=document.createElement('div');bubble.className='message-bubble';const p=document.createElement('p');p.textContent=row.body;bubble.append(p);const t=document.createElement('small');t.className='message-time';t.textContent=chatMessageTime(row.created_at);t.title=buddyTime(row.created_at);body.append(bubble,t);item.append(body);return item;}
+function messageNode(row,group=false){const mine=row.sender_id===state.user.id,item=document.createElement('div');item.className=`buddy-message ${mine?'mine':''}`;item.dataset.message=String(row.id);item.dataset.sender=String(row.sender_id);item.dataset.identity=JSON.stringify([chatName(row),row.avatar_url,row.identity_hidden]);item.innerHTML=chatAvatar(row);const body=document.createElement('div');body.className='message-body';if(group&&!mine){const name=document.createElement('strong');name.className='message-sender';name.textContent=chatName(row);body.append(name);}const bubble=document.createElement('div');bubble.className='message-bubble';const p=document.createElement('p');p.textContent=row.body;bubble.append(p);const t=document.createElement('small');t.className='message-time';t.textContent=chatMessageTime(row.created_at);t.title=buddyTime(row.created_at);body.append(bubble,t);item.append(body);return item;}
 function appendBuddyMessages(rows,older=false){
   const box=$('buddyMessages'),fragment=document.createDocumentFragment();
   for(const row of rows){if(box.querySelector(`[data-message="${row.id}"]`))continue;fragment.append(messageNode(row));buddy.after=Math.max(buddy.after,row.id);buddy.before=buddy.before?Math.min(buddy.before,row.id):row.id;}
