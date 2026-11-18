@@ -2260,3 +2260,59 @@ dialog .change-proposal {
         padding: 14px !important;
     }
 }
+
+
+/* 组局进度条：运动项目图标直接作为进度标记显示在轨道上 */
+.meetup-progress {
+  margin: 16px 0 18px;
+  padding: 0 3px;
+}
+.meetup-progress-track {
+  position: relative;
+  height: 10px;
+  margin: 18px 18px 22px;
+  border-radius: 999px;
+  background: #e9e2ef;
+}
+.meetup-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  max-width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b9a3d4, #76569b);
+  transition: width .4s ease;
+}
+.meetup-progress-icon {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: 2px solid #fffdf8;
+  border-radius: 50%;
+  background: #f1eafa;
+  box-shadow: 0 2px 7px rgba(68, 48, 91, .16);
+  font-size: 21px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  transition: left .4s ease;
+}
+.meetup-progress-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.meetup-progress-caption span:first-child {
+  color: var(--green);
+  font-weight: 650;
+}
+@media (prefers-reduced-motion: reduce) {
+  .meetup-progress-fill,
+  .meetup-progress-icon { transition: none; }
+}
