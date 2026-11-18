@@ -154,7 +154,18 @@ function renderBuddyChats(){
 }
 function renderMessageSelf(){if(!state.user)return;const person={...state.user,...(campus.profile||{})},signature=JSON.stringify([chatName(person),person.avatar_url]);if($('messageSelfAvatar').dataset.identity===signature)return;$('messageSelfAvatar').innerHTML=chatAvatar(person);$('messageSelfAvatar').dataset.identity=signature;}
 function chatName(person){return person?.display_name||person?.username||'运动伙伴';}
-function chatListTime(value){const d=new Date(value);return localDate(d)===localDate()?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});}
+// 聊天记录始终显示日期和具体时间
+function chatMessageTime(value){
+  const d = new Date(value);
+
+  return d.toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}
 function chatAvatar(person){const name=chatName(person);return `<span class="chat-avatar" title="${escapeHTML(name)}"><span class="chat-avatar-fallback" aria-hidden="true">${escapeHTML(Array.from(name)[0]||'同')}</span>${avatarPhotoMarkup(person,true)}</span>`;}
 function updateChatHeading(person){const signature=JSON.stringify([chatName(person),person?.avatar_url,person?.identity_hidden]);if($('buddyChatAvatar').dataset.identity!==signature){$('buddyChatAvatar').innerHTML=chatAvatar(person);$('buddyChatAvatar').dataset.identity=signature;}$('buddyChatTitle').textContent=chatName(person);$('buddyChatTopic').textContent=person?.topic||'聊聊时间和集合地点';}
 function updateMessageIdentity(box,person,userId){if(!person)return;for(const row of box.querySelectorAll(`[data-sender="${userId}"]`)){const signature=JSON.stringify([chatName(person),person.avatar_url,person.identity_hidden]);if(row.dataset.identity===signature)continue;row.querySelector('.chat-avatar')?.remove();row.insertAdjacentHTML('afterbegin',chatAvatar(person));row.dataset.identity=signature;const label=row.querySelector('.message-sender');if(label)label.textContent=chatName(person);}}
