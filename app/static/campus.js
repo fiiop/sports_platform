@@ -21,47 +21,33 @@ function refreshBuddyDates(){const today=new Date(),options=[{value:'',name:'不
 function syncPeriodButtons(){document.querySelectorAll('[data-period]').forEach(b=>{const active=b.dataset.period===$('buddyPeriodFilter').value;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});}
 function scheduleSearch(){if($('buddyFilterDialog')?.open)return;clearTimeout(buddy.searchTimer);buddy.listRequest++;$('buddyListMsg').textContent='正在匹配项目…';buddy.searchTimer=setTimeout(()=>loadBuddyStatuses(),280);}
 function meetupSportIcon(sport){
-  const name = String(sport || '').toLowerCase();
-
-  if(name.includes('羽毛球')) return '🏸';
-  if(name.includes('篮球')) return '🏀';
-  if(name.includes('足球')) return '⚽';
-  if(name.includes('乒乓')) return '🏓';
-  if(name.includes('网球')) return '🎾';
-  if(name.includes('排球')) return '🏐';
-  if(name.includes('游泳')) return '🏊';
-  if(name.includes('跑步')) return '🏃';
-  if(name.includes('骑行')) return '🚴';
-  if(name.includes('健身')) return '🏋️';
-  if(name.includes('瑜伽')) return '🧘';
-
+  const name=String(sport||'').toLowerCase();
+  if(name.includes('羽毛球'))return '🏸';
+  if(name.includes('篮球'))return '🏀';
+  if(name.includes('足球'))return '⚽';
+  if(name.includes('乒乓'))return '🏓';
+  if(name.includes('网球'))return '🎾';
+  if(name.includes('排球'))return '🏐';
+  if(name.includes('游泳'))return '🏊';
+  if(name.includes('跑步'))return '🏃';
+  if(name.includes('骑行'))return '🚴';
+  if(name.includes('健身'))return '🏋️';
+  if(name.includes('瑜伽'))return '🧘';
   return '🏅';
 }
-
-function meetupProgress(m, active){
-  if(m.kind !== 'group') return '';
-
-  const capacity = Math.max(1, Number(m.capacity) || 1);
-  const joined = Math.min(capacity, active.length);
-  const percent = Math.round(joined / capacity * 100);
-  const remaining = Math.max(0, capacity - joined);
-
-  return `
-    <div class="meetup-progress">
-      <div class="meetup-progress-track">
-        <span class="meetup-progress-fill"
-          style="width:${percent}%"></span>
-        <span class="meetup-progress-icon"
-          style="left:${percent}%">
-          ${meetupSportIcon(m.exercise_type)}
-        </span>
-      </div>
-      <div class="meetup-progress-caption">
-        <span>已加入 ${joined}/${capacity} 人</span>
-        <span>${remaining === 0 ? '组队已满' : `还差 ${remaining} 人`}</span>
-      </div>
+function meetupProgress(m,active){
+  if(m.kind!=='group')return '';
+  const capacity=Math.max(1,Number(m.capacity)||1);
+  const joined=Math.min(capacity,active.length);
+  const percent=Math.round(joined/capacity*100);
+  const remaining=Math.max(0,capacity-joined);
+  return `<div class="meetup-progress" aria-label="组队进度 ${joined}/${capacity} 人">
+    <div class="meetup-progress-track">
+      <span class="meetup-progress-fill" style="width:${percent}%"></span>
+      <span class="meetup-progress-icon" style="left:${percent}%" aria-hidden="true">${meetupSportIcon(m.exercise_type)}</span>
     </div>
-  `;
+    <div class="meetup-progress-caption"><span>已加入 ${joined}/${capacity} 人</span><span>${remaining===0?'组队已满':`还差 ${remaining} 人`}</span></div>
+  </div>`;
 }
 function meetingCard(m,detail=false){
   const mine=m.members.find(p=>p.user_id===state.user?.id),others=m.members.filter(p=>p.user_id!==state.user?.id),active=m.members.filter(p=>p.status==='accepted'),future=new Date(m.starts_at)>new Date(),ended=new Date(m.ends_at)<=new Date();
@@ -73,7 +59,7 @@ function meetingCard(m,detail=false){
   if(canRepeatMeeting(m))buttons+=`<button type="button" data-repeat-meetup="${m.id}">再约一场</button>`;
   let proposal='';if(m.proposal){proposal=`<div class="change-proposal"><strong>待确认的改约</strong><p>${escapeHTML(buddyTime(m.proposal.starts_at))} · ${m.proposal.duration} 分钟<br>${escapeHTML(m.proposal.location)}</p><small>原约定继续有效，所有参与者同意后变更。</small>${mine?.status==='accepted'&&!mine.voted?`<div class="actions"><button type="button" data-meetup-action="accept_change" data-meeting-id="${m.id}">同意改约</button><button type="button" class="ghost" data-meetup-action="reject_change" data-meeting-id="${m.id}">保留原安排</button></div>`:'<p class="fine">你已同意，等待其他参与者确认。</p>'}</div>`;}
   const cancelled=m.cancel_reason?`<p class="cancel-note">${m.late_cancel?'临时取消':'提前取消'}：${escapeHTML(m.cancel_reason)}</p>`:'';
-  return `<article class="card meetup-card"><div class="section-head"><span class="pill ${m.state==='completed'?'completed':''}">${meetingLabels[m.state]||m.state}${m.kind==='group'?` · ${active.length}/${m.capacity} 人`:''}</span>${!detail?`<button type="button" class="text-button" data-open-meetup="${m.id}">详情 ↗</button>`:''}</div><h2>${escapeHTML(m.exercise_type)}</h2><p class="buddy-date">${escapeHTML(buddyTime(m.starts_at))} · ${m.duration} 分钟</p><p class="record-detail">⌖ ${escapeHTML(m.location)}</p><p class="fine">${m.kind==='group'?'组局伙伴':'一起运动'}：${escapeHTML(active.map(p=>chatName(p)).join('、'))}${m.members.some(p=>p.status==='pending')&&future?` · 等待 ${escapeHTML(m.members.filter(p=>p.status==='pending').map(p=>chatName(p)).join('、'))} 回应`:''}</p>${m.state==='confirmed'&&ended?`<p class="confirmation-note">${mine?.attended?'你已确认参加，等待同伴确认。':'运动时间已结束，请按实际情况确认参加。'} ${active.filter(p=>p.attended).length}/${active.length} 人已确认</p>`:''}${cancelled}${proposal}<div class="actions">${buttons}</div>${detail?`<details class="member-details"><summary>参与者与记录</summary>${m.members.map(p=>`<div class="member-row"><div><strong>${escapeHTML(chatName(p))}${p.user_id===state.user.id?' · 我':''}</strong><p class="fine">${p.status==='cancelled'?`${p.late_cancel?'临时':'提前'}退出：${escapeHTML(p.cancel_reason)}`:p.attended?'已确认参加':p.status==='pending'?'待回应':p.status==='declined'?'未接受邀请':'尚未确认参加'}</p></div>${p.user_id!==state.user.id?`<div class="actions">${m.state==='completed'&&p.attended?`<button type="button" class="text-button" data-rate-user="${p.user_id}">评价</button>`:''}<button type="button" class="text-button" data-report-member="${p.user_id}" data-meeting-id="${m.id}">举报</button></div>`:''}</div>`).join('')}</details>`:''}</article>`;
+  return `<article class="card meetup-card"><div class="section-head"><span class="pill ${m.state==='completed'?'completed':''}">${meetingLabels[m.state]||m.state}${m.kind==='group'?` · ${active.length}/${m.capacity} 人`:''}</span>${!detail?`<button type="button" class="text-button" data-open-meetup="${m.id}">详情 ↗</button>`:''}</div><h2>${escapeHTML(m.exercise_type)}</h2>${meetupProgress(m,active)}<p class="buddy-date">${escapeHTML(buddyTime(m.starts_at))} · ${m.duration} 分钟</p><p class="record-detail">⌖ ${escapeHTML(m.location)}</p><p class="fine">${m.kind==='group'?'组局伙伴':'一起运动'}：${escapeHTML(active.map(p=>chatName(p)).join('、'))}${m.members.some(p=>p.status==='pending')&&future?` · 等待 ${escapeHTML(m.members.filter(p=>p.status==='pending').map(p=>chatName(p)).join('、'))} 回应`:''}</p>${m.state==='confirmed'&&ended?`<p class="confirmation-note">${mine?.attended?'你已确认参加，等待同伴确认。':'运动时间已结束，请按实际情况确认参加。'} ${active.filter(p=>p.attended).length}/${active.length} 人已确认</p>`:''}${cancelled}${proposal}<div class="actions">${buttons}</div>${detail?`<details class="member-details"><summary>参与者与记录</summary>${m.members.map(p=>`<div class="member-row"><div><strong>${escapeHTML(chatName(p))}${p.user_id===state.user.id?' · 我':''}</strong><p class="fine">${p.status==='cancelled'?`${p.late_cancel?'临时':'提前'}退出：${escapeHTML(p.cancel_reason)}`:p.attended?'已确认参加':p.status==='pending'?'待回应':p.status==='declined'?'未接受邀请':'尚未确认参加'}</p></div>${p.user_id!==state.user.id?`<div class="actions">${m.state==='completed'&&p.attended?`<button type="button" class="text-button" data-rate-user="${p.user_id}">评价</button>`:''}<button type="button" class="text-button" data-report-member="${p.user_id}" data-meeting-id="${m.id}">举报</button></div>`:''}</div>`).join('')}</details>`:''}</article>`;
 }
 async function loadMeetups(append=false){const epoch=state.epoch,rows=await api(`/api/meetups?offset=${append?campus.meetings.length:0}`);if(epoch!==state.epoch)return;campus.meetings=append?[...campus.meetings,...rows]:rows;renderMeetups();$('moreMeetups').classList.toggle('hidden',rows.length<30);}
 function renderMeetups(){
@@ -81,8 +67,7 @@ function renderMeetups(){
   $('meetupList').innerHTML=sorted.map(m=>meetingCard(m)).join('')||'<div class="card empty"><b>还没有运动约定</b>从搭子聊天中发出邀请，或加入一个多人组局。<button type="button" class="ghost" data-go="buddies">去找搭子 →</button></div>';
   const next=sorted.find(m=>m.state==='confirmed'&&new Date(m.starts_at)>new Date()&&m.members.some(p=>p.user_id===state.user.id&&p.status==='accepted'));
   $('nextMeetupCard').classList.toggle('hidden',!next);
-  $('nextMeetup').innerHTML=next?`<div class="next-meetup-body"><div><h2>${escapeHTML(m.exercise_type)}</h2>
-${meetupProgress(m,active)}<p>${escapeHTML(buddyTime(next.starts_at))}</p><p class="fine">${escapeHTML(next.location)}</p></div><button type="button" data-open-meetup="${next.id}">查看约定 ↗</button></div>`:'';
+  $('nextMeetup').innerHTML=next?`<div class="next-meetup-body"><div><h2>${escapeHTML(next.exercise_type)}</h2><p>${escapeHTML(buddyTime(next.starts_at))}</p><p class="fine">${escapeHTML(next.location)}</p></div><button type="button" data-open-meetup="${next.id}">查看约定 ↗</button></div>`:'';
   const groups=sorted.filter(m=>m.kind==='group'),groupSignature=JSON.stringify(groups);
   if($('groupChats').dataset.signature!==groupSignature){$('groupChats').dataset.signature=groupSignature;$('groupChats').innerHTML=groups.map(m=>`<button type="button" class="buddy-chat-choice group-chat-choice chat-list-row" data-open-meetup="${m.id}"><span class="chat-group-avatar" aria-hidden="true">${m.members.filter(p=>p.status==='accepted').slice(0,4).map(p=>chatAvatar(p)).join('')||'<span>群</span>'}</span><span class="chat-list-content"><span class="chat-meta"><strong>${escapeHTML(m.exercise_type)}组局</strong><span class="chat-group-label">群聊</span></span><small class="chat-preview">${escapeHTML(m.location)} · ${meetingLabels[m.state]}</small></span></button>`).join('');
   }
