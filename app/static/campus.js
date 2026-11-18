@@ -20,6 +20,49 @@ async function refreshCampusStats(){const epoch=state.epoch,p=await api('/api/pr
 function refreshBuddyDates(){const today=new Date(),options=[{value:'',name:'不限',date:'日期'}];for(let i=0;i<5;i++){const d=new Date(today);d.setDate(d.getDate()+i);options.push({value:localDate(d),name:i===0?'今天':i===1?'明天':d.toLocaleDateString('zh-CN',{weekday:'short'}),date:`${d.getMonth()+1}.${d.getDate()}`});}if(!options.some(o=>o.value===$('buddyTimeFilter').value))$('buddyTimeFilter').value='';$('buddyDates').innerHTML=options.map(o=>`<button type="button" data-filter-date="${o.value}" aria-pressed="${o.value===$('buddyTimeFilter').value}" class="${o.value===$('buddyTimeFilter').value?'selected':''}"><strong>${o.name}</strong><small>${o.date}</small></button>`).join('');}
 function syncPeriodButtons(){document.querySelectorAll('[data-period]').forEach(b=>{const active=b.dataset.period===$('buddyPeriodFilter').value;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});}
 function scheduleSearch(){if($('buddyFilterDialog')?.open)return;clearTimeout(buddy.searchTimer);buddy.listRequest++;$('buddyListMsg').textContent='正在匹配项目…';buddy.searchTimer=setTimeout(()=>loadBuddyStatuses(),280);}
+function meetupSportIcon(sport){
+  const name = String(sport || '').toLowerCase();
+
+  if(name.includes('羽毛球')) return '🏸';
+  if(name.includes('篮球')) return '🏀';
+  if(name.includes('足球')) return '⚽';
+  if(name.includes('乒乓')) return '🏓';
+  if(name.includes('网球')) return '🎾';
+  if(name.includes('排球')) return '🏐';
+  if(name.includes('游泳')) return '🏊';
+  if(name.includes('跑步')) return '🏃';
+  if(name.includes('骑行')) return '🚴';
+  if(name.includes('健身')) return '🏋️';
+  if(name.includes('瑜伽')) return '🧘';
+
+  return '🏅';
+}
+
+function meetupProgress(m, active){
+  if(m.kind !== 'group') return '';
+
+  const capacity = Math.max(1, Number(m.capacity) || 1);
+  const joined = Math.min(capacity, active.length);
+  const percent = Math.round(joined / capacity * 100);
+  const remaining = Math.max(0, capacity - joined);
+
+  return `
+    <div class="meetup-progress">
+      <div class="meetup-progress-track">
+        <span class="meetup-progress-fill"
+          style="width:${percent}%"></span>
+        <span class="meetup-progress-icon"
+          style="left:${percent}%">
+          ${meetupSportIcon(m.exercise_type)}
+        </span>
+      </div>
+      <div class="meetup-progress-caption">
+        <span>已加入 ${joined}/${capacity} 人</span>
+        <span>${remaining === 0 ? '组队已满' : `还差 ${remaining} 人`}</span>
+      </div>
+    </div>
+  `;
+}
 function meetingCard(m,detail=false){
   const mine=m.members.find(p=>p.user_id===state.user?.id),others=m.members.filter(p=>p.user_id!==state.user?.id),active=m.members.filter(p=>p.status==='accepted'),future=new Date(m.starts_at)>new Date(),ended=new Date(m.ends_at)<=new Date();
   let buttons='';
@@ -38,7 +81,8 @@ function renderMeetups(){
   $('meetupList').innerHTML=sorted.map(m=>meetingCard(m)).join('')||'<div class="card empty"><b>还没有运动约定</b>从搭子聊天中发出邀请，或加入一个多人组局。<button type="button" class="ghost" data-go="buddies">去找搭子 →</button></div>';
   const next=sorted.find(m=>m.state==='confirmed'&&new Date(m.starts_at)>new Date()&&m.members.some(p=>p.user_id===state.user.id&&p.status==='accepted'));
   $('nextMeetupCard').classList.toggle('hidden',!next);
-  $('nextMeetup').innerHTML=next?`<div class="next-meetup-body"><div><h2>${escapeHTML(next.exercise_type)}</h2><p>${escapeHTML(buddyTime(next.starts_at))}</p><p class="fine">${escapeHTML(next.location)}</p></div><button type="button" data-open-meetup="${next.id}">查看约定 ↗</button></div>`:'';
+  $('nextMeetup').innerHTML=next?`<div class="next-meetup-body"><div><h2>${escapeHTML(m.exercise_type)}</h2>
+${meetupProgress(m,active)}<p>${escapeHTML(buddyTime(next.starts_at))}</p><p class="fine">${escapeHTML(next.location)}</p></div><button type="button" data-open-meetup="${next.id}">查看约定 ↗</button></div>`:'';
   const groups=sorted.filter(m=>m.kind==='group'),groupSignature=JSON.stringify(groups);
   if($('groupChats').dataset.signature!==groupSignature){$('groupChats').dataset.signature=groupSignature;$('groupChats').innerHTML=groups.map(m=>`<button type="button" class="buddy-chat-choice group-chat-choice chat-list-row" data-open-meetup="${m.id}"><span class="chat-group-avatar" aria-hidden="true">${m.members.filter(p=>p.status==='accepted').slice(0,4).map(p=>chatAvatar(p)).join('')||'<span>群</span>'}</span><span class="chat-list-content"><span class="chat-meta"><strong>${escapeHTML(m.exercise_type)}组局</strong><span class="chat-group-label">群聊</span></span><small class="chat-preview">${escapeHTML(m.location)} · ${meetingLabels[m.state]}</small></span></button>`).join('');
   }
