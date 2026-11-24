@@ -1,3 +1,4 @@
+
 const campus={profile:null,meetings:[],meeting:null,request:0,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminId:null,adminRows:[]};
 const meetingLabels={pending:'待回应',confirmed:'已约好',completed:'已完成',cancelled:'已取消',declined:'未接受',expired:'已过期'};
 function resetCampus(){campus.request++;delete $('groupChats').dataset.signature;Object.assign(campus,{profile:null,meetings:[],meeting:null,groupAfter:0,groupBefore:0,groupLoading:false,formMeeting:null,repeatMeeting:null,repeatRequest:null,cancelMeeting:null,report:null,adminRows:[]});for(const id of ['meetupList','meetupDetail','groupMessages','pinnedMeetup','groupChats','noticeList','adminReports','myReports'])$(id).replaceChildren();for(const id of ['meetupFormDialog','repeatMeetupDialog','cancelMeetupDialog','reportDialog','adminDialog'])if($(id).open)$(id).close();$('adminPanel').classList.add('hidden');$('profileSchool').value='湘潭大学';}
@@ -92,7 +93,191 @@ async function submitRepeatMeeting(){
 }
 async function withConflict(url,payload){try{return await api(url,{method:'POST',body:JSON.stringify(payload)});}catch(e){if(e.detail?.conflicts&&confirm(e.detail.message))return api(url,{method:'POST',body:JSON.stringify({...payload,allow_conflict:true})});throw e;}}
 async function refreshMeetingResult(m){if(campus.meeting?.id===m.id){campus.meeting=m;$('meetupDetail').innerHTML=meetingCard(m,true);const canRead=m.kind==='group'&&m.members.some(p=>p.user_id===state.user.id&&['accepted','cancelled'].includes(p.status));$('groupChatPanel').classList.toggle('hidden',!canRead);updateGroupComposer();}await loadMeetups();if(buddy.chatId)await loadPinnedMeetup(buddy.chatId);if(m.state==='completed'){const epoch=state.epoch,p=await api('/api/profile');if(epoch===state.epoch){if(campus.profile)Object.assign(campus.profile,{completed:p.completed,is_admin:p.is_admin});$('completedCount').textContent=`已完成 ${p.completed} 次约定`;}}}
-async function decideMeeting(id,action,reason=''){const m=findMeeting(id);if(!m)throw new Error('请刷新约定后重试。');const epoch=state.epoch,result=await withConflict(`/api/meetups/${id}/decision`,{action,revision:m.revision,reason});if(epoch!==state.epoch)return;await refreshMeetingResult(result);notify(action==='attend'?'已记录你的参加确认':action==='accept'?'邀请已接受':'约定已更新');}
+
+function showBoatJoinAnimation(meeting, pending = false) {
+  if (!meeting || meeting.kind !== 'group') return null;
+
+  const people = (meeting.members || []).filter(
+    person => person.status === 'accepted'
+  );
+
+  if (people.length < 2) return null;
+
+  document.querySelector('.boat-join-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'boat-join-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const passengers = people.slice(0, 8).map((person, index) =>
+    `<span class="boat-passenger"
+      style="--person-index:${index}"
+      aria-hidden="true">🧑</span>`
+  ).join('');
+
+  const more = people.length > 8
+    ? `<span class="boat-more">+${people.length - 8}</span>`
+    : '';
+
+  overlay.innerHTML = `
+    <section class="boat-join-dialog">
+      <button type="button" class="boat-close" aria-label="关闭动画">×</button>
+
+      <span class="boat-join-kicker">LET’S GO TOGETHER</span>
+
+      <h2>${pending ? '正在登船…' : '又有伙伴上船啦！'}</h2>
+
+      <p class="boat-join-subtitle">
+        ${escapeHTML(meeting.exercise_type || '运动')}小队正在集结
+      </p>
+
+      <div class="boat-scene">
+        <span class="boat-sun"></span>
+        <span class="boat-wave"></span>
+        <span class="boat-wave boat-wave-two"></span>
+
+        <svg class="boat-svg" viewBox="0 0 460 180"
+          role="img" aria-label="一艘载着伙伴的小船">
+          <path class="boat-sail" d="M222 18 L222 116 L150 116 Z"/>
+          <path class="boat-sail boat-sail-two"
+            d="M232 42 L232 116 L300 116 Z"/>
+          <path class="boat-mast" d="M226 14V126"/>
+          <path class="boat-hull"
+            d="M65 125 Q230 153 395 125 L360 163 Q230 178 100 163 Z"/>
+          <path class="boat-hull-line"
+            d="M105 139 Q230 158 355 139"/>
+        </svg>
+
+        <div class="boat-passengers">
+          ${passengers}${more}
+        </div>
+      </div>
+
+      <p class="boat-join-count">
+        ${pending ? '正在确认加入…' : `${people.length} 位伙伴已加入`}
+      </p>
+
+      <p class="boat-join-names">
+        下一场运动，一起出发
+      </p>
+
+      <button type="button" class="boat-confirm">
+        ${pending ? '正在登船…' : '太棒了，出发！'}
+      </button>
+    </section>
+  `;
+
+  document.body.append(overlay);
+
+  let removed = false;
+  let closeTimer = null;
+  let autoTimer = null;
+
+  function close() {
+    if (removed) return;
+
+    removed = true;
+    clearTimeout(closeTimer);
+    clearTimeout(autoTimer);
+
+    overlay.classList.add('boat-leaving');
+    closeTimer = window.setTimeout(() => overlay.remove(), 180);
+  }
+
+  function success(result) {
+    if (removed || !overlay.isConnected) return;
+
+    const count = (result.members || [])
+      .filter(person => person.status === 'accepted').length;
+
+    overlay.querySelector('h2').textContent = '又有伙伴上船啦！';
+    overlay.querySelector('.boat-join-count').textContent =
+      `${count} 位伙伴已加入`;
+    overlay.querySelector('.boat-confirm').textContent = '太棒了，出发！';
+
+    clearTimeout(autoTimer);
+    autoTimer = window.setTimeout(close, 4500);
+  }
+
+  overlay.querySelector('.boat-close').addEventListener('click', close);
+  overlay.querySelector('.boat-confirm').addEventListener('click', close);
+
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) close();
+  });
+
+  // 请求期间也给用户一个可见的即时反馈
+  autoTimer = window.setTimeout(close, 12000);
+
+  if (!pending) {
+    clearTimeout(autoTimer);
+    autoTimer = window.setTimeout(close, 4500);
+  }
+
+  return { close, success };
+}
+
+
+async function decideMeeting(id, action, reason = '') {
+  const m = findMeeting(id);
+
+  if (!m) {
+    throw new Error('请刷新约定后重试。');
+  }
+
+  const epoch = state.epoch;
+  let animation = null;
+
+  // 点击接受邀请时，先立即播放动画
+  if (action === 'accept' && m.kind === 'group') {
+    const optimisticMeeting = {
+      ...m,
+      members: (m.members || []).map(person =>
+        person.user_id === state.user.id
+          ? { ...person, status: 'accepted' }
+          : person
+      )
+    };
+
+    animation = showBoatJoinAnimation(optimisticMeeting, true);
+  }
+
+  let result;
+
+  try {
+    result = await withConflict(
+      `/api/meetups/${id}/decision`,
+      {
+        action,
+        revision: m.revision,
+        reason
+      }
+    );
+  } catch (error) {
+    animation?.close();
+    throw error;
+  }
+
+  if (epoch !== state.epoch) {
+    animation?.close();
+    return;
+  }
+
+  // 服务器确认成功，更新动画内容
+  animation?.success(result);
+
+  await refreshMeetingResult(result);
+
+  notify(
+    action === 'attend'
+      ? '已记录你的参加确认'
+      : action === 'accept'
+        ? '邀请已接受'
+        : '约定已更新'
+  );
+}
+
 function openInvite(meeting=null){const selected=selectedBuddy();if(!meeting&&!selected){notify('请先打开一位搭子的聊天');return;}campus.formMeeting=meeting;$('meetupForm').reset();$('inviteSport').value=meeting?.exercise_type||selected?.topic.split(' · ')[0]||'羽毛球';$('inviteSport').disabled=!!meeting;const d=meeting?new Date(meeting.starts_at):new Date(Date.now()+86400000);$('inviteTime').value=`${localDate(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;$('inviteDuration').value=String(meeting?.duration||60);$('invitePlace').value=meeting?.location||selected?.topic.split(' · ').slice(1).join(' · ')||'';$('meetupFormTitle').textContent=meeting?'提出新的时间和地点':'发出运动邀请';$('inviteSubmit').textContent=meeting?'发送改约提议':'发送邀请';$('inviteMsg').textContent='';$('meetupFormDialog').showModal();}
 async function submitInvite(){await busy($('inviteSubmit'),async()=>{const epoch=state.epoch,m=campus.formMeeting,payload={starts_at:new Date($('inviteTime').value).toISOString(),duration:Number($('inviteDuration').value),location:$('invitePlace').value.trim()};if(m)payload.revision=m.revision;else Object.assign(payload,{chat_id:buddy.chatId,exercise_type:$('inviteSport').value.trim()});const result=await withConflict(m?`/api/meetups/${m.id}/change`:'/api/meetups',payload);if(epoch!==state.epoch)return;$('meetupFormDialog').close();await refreshMeetingResult(result);notify(m?'改约提议已发出，等待同伴确认':'运动邀请已发出');},'inviteMsg');}
 function openReport(data,name){campus.report=data;$('reportForm').reset();$('reportTarget').textContent=`举报对象：${name}`;$('reportMsg').textContent='';$('reportDialog').showModal();}
