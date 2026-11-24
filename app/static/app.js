@@ -16,7 +16,7 @@ async function api(url, options={}) {
   const data=await r.json().catch(()=>({}));
   if(!r.ok){
     if(r.status===401 && state.user && requestEpoch===state.epoch) showAuth();
-    const message=Array.isArray(data.detail)?data.detail.map(x=>x.msg.replace('Value error, ','')).join('；'):typeof data.detail==='object'?data.detail?.message:data.detail;
+     const translateValidationMessage = item => {   const msg = String(item?.msg || item || '')     .replace('Value error, ', '');    if (/Input should be a valid integer/.test(msg)) {     return '参数格式错误：需要填写有效的整数。';   }    if (/Input should be a valid number/.test(msg)) {     return '参数格式错误：需要填写有效的数字。';   }    if (/Input should be a valid string/.test(msg)) {     return '参数格式错误：内容格式不正确。';   }    if (/Field required/.test(msg)) {     return '缺少必填信息，请检查后重试。';   }    if (/String should have at most/.test(msg)) {     return '输入内容过长，请缩短后重试。';   }    if (/String should have at least/.test(msg)) {     return '输入内容太短，请补充后重试。';   }    return msg; };  const message = Array.isArray(data.detail)   ? data.detail.map(translateValidationMessage).join('；')   : typeof data.detail === 'object'     ? translateValidationMessage(data.detail?.message || JSON.stringify(data.detail))     : translateValidationMessage(data.detail);
     const error=new Error(message || `请求失败（${r.status}）`);error.detail=data.detail;error.status=r.status;throw error;
   }
   return data;
